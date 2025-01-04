@@ -1,0 +1,18 @@
+.app-container {
+    text-align: center;
+    margin: 20px;
+  }
+  
+  .video-container {
+    display: flex; /* This arranges the videos horizontally */
+    justify-content: center;
+    gap: 20px; /* Space between the two videos */
+  }
+  
+  .video {
+    width: 200px; /* Set a fixed width for both videos */
+    height: 150px; /* Set a fixed height for both videos */
+    border-radius: 8px; /* Optional: rounded corners */
+    object-fit: cover; /* Ensure the video fits the box */
+  }
+  

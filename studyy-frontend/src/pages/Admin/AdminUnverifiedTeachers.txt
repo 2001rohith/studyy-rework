@@ -1,0 +1,30 @@
+          {loading ? (
+             
+          ) : error ? (
+           
+          ) : currentQuizzes.length === 0 ? (
+           
+          ) : (
+            
+          )}
+          
+          {loading? (
+            something here
+          ):error?(
+
+          ):curr.length === 0 ?(
+
+          ):(
+
+          )}
+
+
+          {something1?(
+
+            ):something2?(
+
+            ):something3?(
+
+            ):(
+                
+            )}
