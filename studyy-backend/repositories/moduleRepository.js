@@ -1,4 +1,5 @@
 const Module = require("../models/moduleModel")
+const constants = require("../helpers/constants")
 
 const moduleRepository = {
     async findModulesByCourse(courseId) {
@@ -13,7 +14,7 @@ const moduleRepository = {
     async deleteModuleById(moduleId) {
         const module = await Module.findByIdAndDelete(moduleId);
         if (!module) {
-            throw new Error("Module not found");
+            throw new Error(constants.MODULE_NOT_FOUND);
         }
         return module;
     },
@@ -21,7 +22,7 @@ const moduleRepository = {
     async updateModule(moduleId, updateData) {
         const updatedModule = await Module.findByIdAndUpdate(moduleId, updateData, { new: true });
         if (!updatedModule) {
-            throw new Error("Module not found");
+            throw new Error(constants.MODULE_NOT_FOUND);
         }
         return updatedModule;
     },

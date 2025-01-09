@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useApiClient } from "../../utils/apiClient"
+import { useUserService } from '../../utils/userService'
 
 function Otp() {
-    const apiClient = useApiClient()
+    const { verifyOTP, resendOTP } = useUserService()
     const [otp, setOtp] = useState('');
     const [message, setMessage] = useState('OTP has been sent via SMS!');
     const [timer, setTimer] = useState(120);
@@ -16,7 +16,7 @@ function Otp() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setMessage("");
+        setMessage("")
         try {
             if (!otp) {
                 setMessage("Enter the OTP");
@@ -26,11 +26,9 @@ function Otp() {
                 setMessage("Too short for OTP");
                 return;
             }
-    
-            const response = await apiClient.post('/user/verify-otp', { email, phone, otp });
-            const data = response.data;
+            const data = await verifyOTP(email, phone, otp)
             setMessage(data.message)
-            if (response.status === 200) {
+            if (data.token) {
                 const token = data.token;
                 navigate("/select-role", { state: { email, token } });
             }
@@ -43,7 +41,7 @@ function Otp() {
             console.error("Error during OTP verification:", error);
         }
     };
-    
+
 
     useEffect(() => {
         let countdown = null;
@@ -62,9 +60,7 @@ function Otp() {
         try {
             setResendDisabled(true);
             setTimer(120);
-
-            const response = await apiClient.post('/user/resend-otp', { email });
-            const data = response.data;
+            const data = await resendOTP(email)
             setMessage(data.message);
         } catch (error) {
             console.error("Error during resending OTP:", error);

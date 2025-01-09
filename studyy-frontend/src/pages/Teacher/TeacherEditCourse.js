@@ -1,17 +1,15 @@
 import { useState, useEffect } from 'react';
 import TeacherSidebar from '../components/TeacherSidebar'
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useApiClient } from "../../utils/apiClient"
-import API_URL from '../../axiourl';
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 
 
 
 
 const TeacherEditCourse = () => {
-    const apiClient = useApiClient()
-
-    const { user,token } = useUser();
+    const { getCourseDetails, updateCourse, deleteModule } = useCourseService()
+    const { user, token } = useUser();
     const navigate = useNavigate()
     const location = useLocation()
     const course = location.state?.course
@@ -28,10 +26,7 @@ const TeacherEditCourse = () => {
         const getModule = async () => {
             console.log("course id again", courseId)
             try {
-
-                const response = await apiClient.get(`/course/get-course/${courseId}`);
-
-                const data = response.data;
+                const data = await getCourseDetails(courseId)
                 console.log("data from teacher home", data)
                 setModules(data.modules || [])
                 console.log("modules extracted:", modules)
@@ -44,35 +39,39 @@ const TeacherEditCourse = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         const trimmedTitle = title.trim();
         const trimmedDescription = description.trim();
 
         if (!trimmedTitle) {
-            setMessage("Enter title")
-            return
+            setMessage("Enter title");
+            return;
         }
 
         if (!trimmedDescription) {
-            setMessage("Enter a proper description")
-            return
+            setMessage("Enter a proper description");
+            return;
         }
+
+        const courseData = {
+            title: trimmedTitle,
+            description: trimmedDescription,
+        };
+
         try {
-
-            const response = await apiClient.put(`/course/teacher-edit-course/${courseId}`, { title: trimmedTitle, description: trimmedDescription });
-
-            const data = response.data;
+            const data = await updateCourse(courseId, courseData);
             setMessage(data.message);
-            console.log(data.message)
-            if (response.status === 200) {
-                setShowToast(!showToast)
-                setTimeout(() => {
-                    navigate("/teacher-view-courses")
-                }, 2000);
-            }
+            console.log(data.message);
+            setShowToast(!showToast);
+            setTimeout(() => {
+                navigate("/teacher-view-courses");
+            }, 2000);
         } catch (error) {
-            console.error('Error creating course:', error);
+            console.error("Error updating course:", error);
+            setMessage(error.message);
         }
     };
+
 
     const addModule = () => {
         navigate("/teacher-edit-course-add-module", { state: { courseId, course } });
@@ -88,25 +87,18 @@ const TeacherEditCourse = () => {
     }
 
     const handleDelete = async () => {
-        // if (!window.confirm('Are you sure you want to delete this module?')) return;
         try {
-            
-            const response = await apiClient.delete(`/course/teacher-delete-module/${moduleId}`);
+            const data = await deleteModule(moduleId)
 
-            const data = response.data;
-            if (response.status === 200) {
-                setModules(modules.filter(mod => mod._id !== moduleId))
-                setDeleteModal(!deleteModal)
-                setModuleId("")
-                setMessage(data.message)
-                setShowToast(!showToast)
-                setTimeout(() => {
-                    setMessage("")
-                    setShowToast(false)
-                }, 5000);
-            } else {
-                alert("Failed to delete module");
-            }
+            setModules(modules.filter(mod => mod._id !== moduleId))
+            setDeleteModal(!deleteModal)
+            setModuleId("")
+            setMessage(data.message)
+            setShowToast(!showToast)
+            setTimeout(() => {
+                setMessage("")
+                setShowToast(false)
+            }, 5000);
         } catch (error) {
             console.log("Error in deleting module", error)
         }

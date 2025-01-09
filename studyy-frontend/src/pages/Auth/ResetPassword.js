@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useApiClient } from "../../utils/apiClient"
+import { useUserService } from '../../utils/userService'
 
 
 function ResetPassword() {
-    const apiClient = useApiClient()
+    const { ResetPassword } = useUserService()
     const { token } = useParams();
     const [message, setMessage] = useState("");
     const [password, setPassword] = useState('');
@@ -13,19 +13,9 @@ function ResetPassword() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await apiClient.post(`/user/reset-password/${token}`, {
-                password,
-                confirmPassword,
-            });
-
-            const data = response.data;
-            if (response.status === 200) {
-                setMessage(data.message);
-                alert(data.message);
-            } else {
-                setMessage(data.message);
-                alert(data.message);
-            }
+            const data = await ResetPassword(token, password, confirmPassword)
+            setMessage(data.message);
+            alert(data.message);
         } catch (error) {
             console.error("Error resetting password:", error);
             setMessage("Error resetting password, please try again.");

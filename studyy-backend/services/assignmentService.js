@@ -1,17 +1,18 @@
 const assignmentRepository = require("../repositories/assignmentRepository")
 const courseRepository = require("../repositories/courseRepository")
+const constants = require("../helpers/constants")
 
 const assignmentService = {
     async getAssignmentsForCourse(courseId) {
         if (!courseId) {
-            throw new Error("Invalid course ID");
+            throw new Error(constants.INVALID_COURSEID);
         }
 
         const assignments = await assignmentRepository.getAssignmentsByCourseId(courseId);
         const courseTitle = await courseRepository.getCourseTitleById(courseId);
 
         if (!assignments || assignments.length === 0) {
-            throw new Error(`No assignments found for the course: ${courseTitle || "Unknown"}`);
+            throw new Error(constants.ASSIGNMENT_NOT_FOUND);
         }
 
         const assignmentsWithCourse = assignments.map((assignment) => ({
@@ -32,7 +33,7 @@ const assignmentService = {
     async createAssignment({ title, description, dueDate, courseId }) {
         const course = await courseRepository.findCourseById(courseId);
         if (!course) {
-            throw new Error("Course not found.");
+            throw new Error(constants.NO_COURSE_FOUND);
         }
     
         const newAssignment = await assignmentRepository.createAssignment({
@@ -75,7 +76,7 @@ const assignmentService = {
         const student = await courseRepository.findStudentById(studentId);
     
         if (!student) {
-            throw new Error("Student not found");
+            throw new Error(constants.STUDENT_NOT_FOUND);
         }
     
         const courseIds = student.enrolledCourses.map(course => course._id);
@@ -95,18 +96,18 @@ const assignmentService = {
         const assignment = await assignmentRepository.findAssignmentById(assignmentId);
     
         if (!assignment) {
-            throw new Error("Assignment not found");
+            throw new Error(constants.ASSIGNMENT_NOT_FOUND);
         }
     
         const currentDate = new Date();
         const dueDate = new Date(assignment.dueDate);
     
         if (currentDate > dueDate) {
-            throw new Error("The assignment due date has passed. You cannot submit the assignment.");
+            throw new Error(constants.ASSIGNMENT_DUE_PASSED);
         }
     
         if (!file) {
-            throw new Error("File is required for submission");
+            throw new Error(constants.FILE_IS_REQUIRED);
         }
     
         assignment.submissions.push({
@@ -122,7 +123,7 @@ const assignmentService = {
         const assignment = await assignmentRepository.findAssignmentById(assignmentId);
     
         if (!assignment) {
-            throw new Error("Assignment not found");
+            throw new Error(constants.ASSIGNMENT_NOT_FOUND);
         }
     
         return assignment.submissions.map(submission => ({

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TeacherSidebar from '../components/TeacherSidebar'
-import { useApiClient } from "../../utils/apiClient"
-import API_URL from '../../axiourl';
+import { useUserService } from '../../utils/userService'
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 
 
 function TeacherProfile() {
-    const apiClient = useApiClient()
+    const { fetchProfileData, updatePassword, editProfileDetails, } = useUserService()
+    const { getCourses } = useCourseService()
     const navigate = useNavigate()
-    // const location = useLocation()
     const { user, updateUser, token } = useUser();
     const [userId, setUserId] = useState(user.id)
     console.log("user id:", userId)
@@ -18,7 +18,6 @@ function TeacherProfile() {
     const [newPassword, setNewPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [name, setName] = useState("")
-    // const [email, setEmail] = useState("")
     const [message, setMessage] = useState('')
     const [showPasswordModal, setShowPasswordModal] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
@@ -29,17 +28,10 @@ function TeacherProfile() {
 
 
     const getProfileData = async () => {
-        // if (!user) {
-        //     navigate('/');
-        //     return;
-        // }
         try {
-            const response = await apiClient.get(`/user/get-profile-data/${userId}`)
-            const data = response.data;
-            if (response.status === 200) {
-                setUserdata(data.user)
-                setIsVerified(data.isVerified)
-            }
+            const data = await fetchProfileData(user.id);
+            setUserdata(data.user)
+            setIsVerified(data.isVerified)
         } catch (error) {
             console.log("error in fetching profile data", error)
             setError('Server error, please try again later')
@@ -49,18 +41,10 @@ function TeacherProfile() {
         getProfileData();
     }, []);
 
-    const getCourses = async () => {
+    const fetchCourses = async () => {
         try {
-
-            const response = await apiClient.get(`/course/get-courses`);
-
-            const data = response.data;
-            if (response.status === 200) {
-                setCourses(data.courses)
-            } else {
-                setError('No courses or failed to fetch!')
-            }
-
+            const data = await getCourses()
+            setCourses(data.courses)
         } catch (error) {
             console.log("error in fetching courses for teacher", error)
             setError('Server error, please try again later')
@@ -68,7 +52,7 @@ function TeacherProfile() {
     }
 
     useEffect(() => {
-        getCourses()
+        fetchCourses()
     }, [])
 
     const setPassword = async (e) => {
@@ -78,24 +62,14 @@ function TeacherProfile() {
             return
         }
         try {
-
-            const response = await apiClient.post(`/user/change-password/${user.id}`, {
-                currentPassword,
-                newPassword,
-            });
-
-            const data = response.data;
-            setMessage(data.message)
-            if (response.status === 200) {
-                setCurrentPassword("")
-                setNewPassword("")
-                setConfirmPassword("")
-                setTimeout(() => {
-                    closeModal()
-                }, 2000)
-            } else {
-                setMessage(data.message || 'Password change failed.');
-            }
+            const data = await updatePassword(user.id, currentPassword, newPassword);
+            setMessage(data.message);
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+            setTimeout(() => {
+                closeModal();
+            }, 2000);
         } catch (error) {
             setMessage('Server error. Please try again later.');
         }
@@ -105,29 +79,27 @@ function TeacherProfile() {
         e.preventDefault()
 
         const trimmedName = name.trim();
+        if (!trimmedName) {
+            setMessage("Enter the name")
+            return
+        }
+        if (trimmedName.length < 2) {
+            setMessage("Too short for name")
+            return
+        }
         try {
-            if (!trimmedName) {
-                setMessage("Enter the name")
-                return
-            }
-            if (trimmedName.length < 2) {
-                setMessage("Too short for name")
-                return
-            }
+            const data = await editProfileDetails(user.id, name);
+            setMessage(data.message);
 
-            const response = await apiClient.put(`/user/edit-profile/${user.id}`, { name });
-
-            const data = response.data;
-            setMessage(data.message)
-            if (response.status === 200) {
+            if (data.status === 200) {
                 updateUser(data.user);
-                setName("")
+                setName("");
                 setTimeout(() => {
-                    getProfileData()
-                    closeEditModal()
-                }, 1000)
+                    fetchProfileData();
+                    closeEditModal();
+                }, 1000);
             } else {
-                setMessage(data.message || 'Password change failed.');
+                setMessage(data.message);
             }
         } catch (error) {
             setMessage('Server error. Please try again later.');
@@ -174,12 +146,12 @@ function TeacherProfile() {
                                         <>
                                             <h2>{user.name} <i className="fa-sharp-duotone fa-solid fa-check fa-sm"></i></h2>
                                             <p>{user.email}</p>
-                                            
+
                                         </>
                                     ) : (
                                         <>
-                                        <h2>{user.name}</h2>
-                                        <p>{user.email}</p>
+                                            <h2>{user.name}</h2>
+                                            <p>{user.email}</p>
                                         </>
                                     )
                                 }

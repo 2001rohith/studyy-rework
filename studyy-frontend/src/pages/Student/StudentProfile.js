@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import StudentSidebar from '../components/StudentSidebar'
-import { useApiClient } from "../../utils/apiClient"
-
+import { useUserService } from '../../utils/userService'
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 
 
 function StudentProfile() {
-    const apiClient = useApiClient()
-    const { user, updateUser,token } = useUser();
+    const { fetchProfileData, updatePassword, editProfileDetails, } = useUserService()
+    const { fetchEnrolledCourses } = useCourseService()
+    const { user, updateUser, token } = useUser();
     const navigate = useNavigate()
-    // const User = JSON.parse(localStorage.getItem('user'));
     const [userId, setUserId] = useState(user.id)
     console.log("user id:", userId)
     const [loading, setLoading] = useState(true)
@@ -18,97 +18,85 @@ function StudentProfile() {
     const [newPassword, setNewPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [name, setName] = useState("")
-    // const [email, setEmail] = useState("")
     const [message, setMessage] = useState('')
     const [showPasswordModal, setShowPasswordModal] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
     const [newCourses, setNewCourses] = useState([])
     const [error, setError] = useState(null)
-    const [userData,setUserdata] = useState()
+    const [userData, setUserdata] = useState()
 
-    const getProfileData = async () => {
-        try {
-            const response = await apiClient.get(`/user/get-profile-data/${userId}`)
-            const data = response.data;
-            if (response.status === 200) {
-                setUserdata(data.user)
-                setLoading(false)
-            }
-        } catch (error) {
-            console.log("error in fetching profile data", error)
-            setError('Server error, please try again later')
-        }
-    }
     useEffect(() => {
+        const getProfileData = async () => {
+            try {
+                const data = await fetchProfileData(user.id);
+                setUserdata(data.user);
+                setLoading(false);
+            } catch (error) {
+                setError(error.message || 'Server error, please try again later');
+            }
+        };
+
         getProfileData();
-    }, []);
+    }, [user]);
+
 
 
     const setPassword = async (e) => {
-        e.preventDefault()
+        e.preventDefault();
+
         if (newPassword !== confirmPassword) {
-            setMessage("New password and confirm password mismatch!")
-            return
+            setMessage("New password and confirm password mismatch!");
+            return;
         }
+
         try {
-
-            const response = await apiClient.post(`/user/change-password/${user.id}`, {
-                currentPassword,
-                newPassword,
-            });
-
-            const data = response.data;
-            setMessage(data.message)
-            if (response.status === 200) {
-                setCurrentPassword("")
-                setNewPassword("")
-                setConfirmPassword("")
-                setTimeout(() => {
-                    closeModal()
-                }, 2000)
-            } else {
-                setMessage(data.message || 'Password change failed.');
-            }
+            const data = await updatePassword(user.id, currentPassword, newPassword);
+            setMessage(data.message);
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+            setTimeout(() => {
+                closeModal();
+            }, 2000);
         } catch (error) {
-            setMessage('Server error. Please try again later.');
+            setMessage(error.message || 'Server error. Please try again later.');
         }
-    }
+    };
+
 
     const editProfile = async (e) => {
-        e.preventDefault()
+        e.preventDefault();
 
         const trimmedName = name.trim();
 
+        if (!trimmedName) {
+            setMessage("Enter the name");
+            return;
+        }
+        if (trimmedName.length < 2) {
+            setMessage("Too short for name");
+            return;
+        }
+
         try {
-            if (!trimmedName) {
-                setMessage("Enter the name")
-                return
-            }
-            if (trimmedName.length < 2) {
-                setMessage("Too short for name")
-                return
-            }
+            const data = await editProfileDetails(user.id, name);
+            setMessage(data.message);
 
-            const response = await apiClient.put(`/user/edit-profile/${user.id}`, {
-                name,
-            });
-
-            const data = response.data;
-            setMessage(data.message)
-            if (response.status === 200) {
+            if (data.status === 200) {
                 updateUser(data.user);
-                setName("")
+                setName("");
                 setTimeout(() => {
-                    getProfileData()
-                    closeEditModal()
-                }, 1000)
+                    fetchProfileData();
+                    closeEditModal();
+                }, 1000);
             } else {
-                setMessage(data.message );
+                setMessage(data.message);
             }
         } catch (error) {
-            setMessage('Server error. Please try again later.');
+            setMessage(error.message || 'Server error. Please try again later.');
         }
-    }
+    };
+
 
     const setModal = () => setShowPasswordModal(!showPasswordModal)
     const setEditModal = () => {
@@ -132,17 +120,12 @@ function StudentProfile() {
 
     const newCourse = async () => {
         try {
-            const response = await apiClient.get(`/course/enrolled-courses/${userId}`);
-
-            if (response.status === 200) {
-                setNewCourses(response.data.courses);
-            } else {
-                console.error("Failed to fetch courses:", response.data.message);
-                setError(response.data.message || 'Failed to fetch courses.');
-            }
+            const data = await fetchEnrolledCourses(userId);
+            setNewCourses(data.courses);
         } catch (error) {
-            console.error("Error fetching courses:", error);
-            setError('Error fetching courses. Please try again.');
+            console.error('Error in fetching courses:', error);
+        } finally {
+            setLoading(false);
         }
     };
 

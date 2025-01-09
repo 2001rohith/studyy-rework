@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import TeacherSidebar from '../components/TeacherSidebar'
-import { useApiClient } from "../../utils/apiClient"
+import { useCourseService } from '../../utils/courseService';
 import API_URL from '../../axiourl';
 import { useUser } from "../../UserContext"
 
 
 
 function TeacherViewCourse() {
-    const apiClient = useApiClient()
-
+    const { getCourseDetails, deleteModule } = useCourseService()
     const navigate = useNavigate()
     const location = useLocation()
     const courseId = location.state?.id
-    const { user,token } = useUser();
+    const { user, token } = useUser();
     const [course, setCourse] = useState()
     const [loading, setLoading] = useState(true)
     const [modules, setModules] = useState()
@@ -25,7 +24,7 @@ function TeacherViewCourse() {
     const [showToast, setShowToast] = useState(false)
     const [message, setMessage] = useState('');
 
-   
+
 
     useEffect(() => {
         if (!user) {
@@ -36,10 +35,7 @@ function TeacherViewCourse() {
             console.log("course id again", courseId)
 
             try {
-
-                const response = await apiClient.get(`/course/get-course/${courseId}`);
-
-                const data = response.data;
+                const data = await getCourseDetails(courseId)
                 console.log("data from teacher home", data)
                 setCourse(data.course)
                 setModules(data.modules || [])
@@ -56,26 +52,19 @@ function TeacherViewCourse() {
         navigate("/teacher-add-module", { state: { courseId } });
     }
 
-    const deleteModule = async (id) => {
+    const handleDelete = async (id) => {
         // if (!window.confirm('Are you sure you want to delete this module?')) return;
         try {
-            
-            const response = await apiClient.delete(`/course/teacher-delete-module/${moduleId}`);
-
-            const data = response.data;
-            if (response.status === 200) {
-                setModules(modules.filter(mod => mod._id !== moduleId))
-                setDeleteModal(!deleteModal)
-                setModuleId("")
-                setMessage(data.message)
-                setShowToast(!showToast)
-                setTimeout(() => {
-                    setMessage("")
-                    setShowToast(false)
-                }, 5000);
-            } else {
-                alert("Failed to delete module");
-            }
+            const data = await deleteModule(moduleId)
+            setModules(modules.filter(mod => mod._id !== moduleId))
+            setDeleteModal(!deleteModal)
+            setModuleId("")
+            setMessage(data.message)
+            setShowToast(!showToast)
+            setTimeout(() => {
+                setMessage("")
+                setShowToast(false)
+            }, 5000);
         } catch (error) {
             console.log("Error in deleting module", error)
         }
@@ -235,7 +224,7 @@ function TeacherViewCourse() {
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={() => setDeleteModal(false)}>Cancel</button>
-                                <button type="button" className="btn btn-danger" onClick={deleteModule}>Delete</button>
+                                <button type="button" className="btn btn-danger" onClick={handleDelete}>Delete</button>
                             </div>
                         </div>
                     </div>

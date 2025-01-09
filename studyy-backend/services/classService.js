@@ -1,18 +1,19 @@
 const classRepository = require("../repositories/classRepository");
 const courseRepository = require("../repositories/courseRepository");
+const constants = require("../helpers/constants")
 
 const classService = {
     async getClassesByCourse(courseId) {
         const classes = await classRepository.findClassesByCourse(courseId);
         if (!classes.length) {
-            throw new Error("No classes found");
+            throw new Error(constants.CLASSES_NOT_FOUND);
         }
         return classes;
     },
 
     async createNewClass({ courseId, title, date, time, duration, teacherId }) {
         if (!courseId || !title || !date || !time || !duration || !teacherId) {
-            throw new Error("All fields are required to create a class.");
+            throw new Error(constants.ALL_FIELD_REQUIRED_CLASS);
         }
 
         const classData = {
@@ -30,7 +31,7 @@ const classService = {
     async getStudentClasses(studentId) {
         const student = await courseRepository.findStudentById(studentId); // Reuse from userRepository
         if (!student) {
-            throw new Error("Student not found");
+            throw new Error(constants.STUDENT_NOT_FOUND);
         }
 
         const courseIds = student.enrolledCourses.map(course => course._id);
@@ -52,13 +53,13 @@ const classService = {
         const updatedClass = await classRepository.updateClassPeerId(classId, peerId);
 
         if (!updatedClass) {
-            throw new Error("Class not found");
+            throw new Error(constants.CLASS_NOT_FOUND);
         }
 
         const course = await courseRepository.findCourseById(updatedClass.course);
 
         if (!course) {
-            throw new Error("Course not found");
+            throw new Error(constants.NO_COURSE_FOUND);
         }
 
         const notificationMessage = `${course.title} - Live class started`;
@@ -75,7 +76,7 @@ const classService = {
         const updatedClass = await classRepository.updateClassDetails(classId, updateData);
 
         if (!updatedClass) {
-            throw new Error("Class not found");
+            throw new Error(constants.CLASS_NOT_FOUND);
         }
 
         return updatedClass;
@@ -85,7 +86,7 @@ const classService = {
         const classToDelete = await classRepository.deleteClassById(classId);
 
         if (!classToDelete) {
-            throw new Error("Class not found");
+            throw new Error(constants.CLASS_NOT_FOUND);
         }
 
         return classToDelete;
@@ -95,7 +96,7 @@ const classService = {
         const selectedClass = await classRepository.findClassById(classId);
 
         if (!selectedClass) {
-            throw new Error('Class not found');
+            throw new Error(constants.CLASS_NOT_FOUND);
         }
 
         return await classRepository.updateClassStatus(classId, 'Ended');

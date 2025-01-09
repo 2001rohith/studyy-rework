@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import TeacherSidebar from '../components/TeacherSidebar';
 import io from 'socket.io-client';
-import { useApiClient } from "../../utils/apiClient";
+import { useCourseService } from '../../utils/courseService';
 import API_URL from '../../axiourl';
 import { useUser } from "../../UserContext";
 
 const socket = io(`${API_URL}`);
 
 function TeacherLiveClasses() {
-    const apiClient = useApiClient();
+    const { deleteClass, getClasses } = useCourseService()
     const navigate = useNavigate();
     const location = useLocation();
     const courseId = location.state?.id;
@@ -23,45 +23,35 @@ function TeacherLiveClasses() {
     const [message, setMessage] = useState("");
     const [error, setError] = useState(null);
 
-    // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [classesPerPage] = useState(5);
 
     const fetchClasses = async () => {
+        setLoading(true);
         try {
-            const response = await apiClient.get(`/course/teacher-get-classes/${courseId}`);
-            const data = response.data;
-
-            if (response.status === 200) {
-                setClasses(data.classes);
-            } else {
-                setError('No live classes found or failed to fetch!');
-            }
+            const classData = await getClasses(courseId);
+            setClasses(classData);
         } catch (err) {
-            setError('Server error, please try again later');
+            setError(err.message || "Server error, please try again later");
         } finally {
             setLoading(false);
         }
     };
-
+    
     const handleDelete = async () => {
+        setLoading(true);
         try {
-            const response = await apiClient.delete(`/course/teacher-delete-class/${selectedClass._id}`);
-            const data = response.data;
-
-            if (response.status === 200) {
-                setClasses(classes.filter(cls => cls._id !== selectedClass._id));
-                setMessage(data.message);
-            } else {
-                setError('Failed to delete the class!');
-            }
+            const message = await deleteClass(selectedClass._id);
+            setClasses(classes.filter(cls => cls._id !== selectedClass._id));
+            setMessage(message);
         } catch (err) {
-            setError('Server error, please try again later');
+            setError(err.message || "Server error, please try again later");
         } finally {
+            setLoading(false);
             setShowModal(false);
             setShowToast(true);
         }
-    };
+    };    
 
     useEffect(() => {
         if (!user) {

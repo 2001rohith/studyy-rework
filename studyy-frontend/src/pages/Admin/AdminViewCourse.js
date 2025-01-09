@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Sidebar2 from '../components/Sidebar2'
-import { useApiClient } from "../../utils/apiClient"
 import { useUser } from "../../UserContext"
 import API_URL from '../../axiourl';
-
+import { useCourseService } from '../../utils/courseService';
 
 
 function AdminViewCourse() {
-    const apiClient = useApiClient()
+    const { adminFetchCourse, deleteModule } = useCourseService()
     const navigate = useNavigate()
     const location = useLocation()
-    const { user,token } = useUser();
+    const { user, token } = useUser();
     const courseId = location.state?.id
     const [course, setCourse] = useState()
     const [loading, setLoading] = useState(true)
@@ -28,11 +27,8 @@ function AdminViewCourse() {
         }
         const getCourse = async () => {
             console.log("course id again", courseId)
-
             try {
-                const response = await apiClient.get(`/course/admin-get-course/${courseId}`);
-
-                const data = response.data;
+                const data = await adminFetchCourse(courseId)
                 console.log("data from teacher home", data)
                 setCourse(data.course)
                 setModules(data.modules || [])
@@ -46,17 +42,12 @@ function AdminViewCourse() {
     }, [])
 
 
-    const deleteModule = async (id) => {
+    const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this module?')) return;
         try {
-            const response = await apiClient.delete(`/course/teacher-delete-module/${id}`);
-
-            if (response.status === 200) {
-                alert("Module deleted successfully");
-                setModules(modules.filter(mod => mod._id !== id))
-            } else {
-                alert("Failed to delete module");
-            }
+            await deleteModule(id)
+            alert("Module deleted successfully");
+            setModules(modules.filter(mod => mod._id !== id))
         } catch (error) {
             console.log("Error in deleting module", error)
         }
@@ -143,7 +134,7 @@ function AdminViewCourse() {
                                                 )}
                                                 <button
                                                     className='btn table-button'
-                                                    onClick={() => deleteModule(mod._id)}
+                                                    onClick={() => handleDelete(mod._id)}
                                                 >
                                                     Delete
                                                 </button>

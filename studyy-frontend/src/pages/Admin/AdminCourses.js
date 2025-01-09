@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar2 from '../components/Sidebar2';
-import { useApiClient } from "../../utils/apiClient"
 import { useUser } from "../../UserContext"
-
+import { useCourseService } from '../../utils/courseService';
 
 
 function AdminCourses() {
-  const apiClient = useApiClient()
+  const { adminFetchCourses, deleteCourse } = useCourseService()
   const navigate = useNavigate();
   const { user, token } = useUser();
   const [courses, setCourses] = useState([]);
@@ -19,21 +18,14 @@ function AdminCourses() {
   const [courseID, setCourseID] = useState('');
   const [currentCourses, setCurrentCourses] = useState([]);
 
- 
+
 
   const getCourses = async () => {
     try {
-      const response = await apiClient.get(`/course/admin-get-courses`);
-
-      const data = response.data;
-      if (response.status === 200) {
-        setCourses(data.courses || []);
-        setAllCourses(data.courses || [])
-        setLoading(false);
-      } else {
-        setError(data.message || 'Failed to fetch courses.');
-        setLoading(false);
-      }
+      const coursesData = await adminFetchCourses()
+      setCourses(coursesData);
+      setAllCourses(coursesData)
+      setLoading(false);
     } catch (err) {
       console.error("Error in fetching courses:", err);
       setError('Server error. Please try again later.');
@@ -66,18 +58,12 @@ function AdminCourses() {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this course?')) return;
-
     try {
-      const response = await apiClient.delete(`/course/teacher-delete-course/${id}`);
-
-      if (response.status === 200) {
-        alert("Course deleted successfully");
-        const updatedCourses = courses.filter(course => course.id !== id);
-        setCourses(updatedCourses);
-        setAllCourses(updatedCourses);
-      } else {
-        alert("Failed to delete course");
-      }
+      await deleteCourse(id)
+      const updatedCourses = courses.filter(course => course.id !== id);
+      alert("Course deleted successfully");
+      setCourses(updatedCourses);
+      setAllCourses(updatedCourses);
     } catch (err) {
       console.error("Error in deleting course:", err);
     }

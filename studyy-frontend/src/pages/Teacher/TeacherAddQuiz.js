@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import TeacherSidebar from '../components/TeacherSidebar';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useApiClient } from "../../utils/apiClient"
-import API_URL from '../../axiourl';
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const TeacherAddQuiz = () => {
-    const apiClient = useApiClient()
+    const { createQuiz } = useCourseService()
     const { user, token } = useUser();
     const location = useLocation();
     const navigate = useNavigate();
@@ -97,20 +96,14 @@ const TeacherAddQuiz = () => {
         const quizData = { title: trimmedTitle, courseId, questions };
 
         try {
-            const response = await apiClient.post(`/course/add-quiz`, quizData);
-            const data = response.data;
-            
-            if (response.status === 200) {
-                toast.success(data.message);
-                setTimeout(() => {
-                    goback();
-                }, 2000);
-            } else {
-                toast.error(data.message || "Error occurred while creating the quiz.");
-            }
+            const data = await createQuiz(quizData);
+            toast.success(data.message);
+            setTimeout(() => {
+                goback();
+            }, 2000);
         } catch (error) {
-            console.error('Error creating quiz:', error);
-            toast.error("Server error. Please try again.");
+            console.error("Error creating quiz:", error);
+            toast.error(error.message);
         }
     };
 

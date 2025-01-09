@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import TeacherSidebar from '../components/TeacherSidebar';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useApiClient } from "../../utils/apiClient"
-import API_URL from '../../axiourl';
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 
 
 
 const TeacherEditAssignment = () => {
-    const apiClient = useApiClient()
+    const { updateAssignment } = useCourseService()
     const { user,token } = useUser();
     const navigate = useNavigate();
     const location = useLocation();
@@ -29,34 +28,40 @@ const TeacherEditAssignment = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         const trimmedTitle = title.trim();
         const trimmedDescription = description.trim();
-
+    
         if (!trimmedTitle) {
             setMessage("Enter a valid title");
             return;
         }
-
+    
         if (!trimmedDescription) {
             setMessage("Enter a valid description");
             return;
         }
-
+    
+        const assignmentData = { 
+            title: trimmedTitle, 
+            description: trimmedDescription, 
+            dueDate 
+        };
+    
         try {
-           
-            const response = await apiClient.put(`/course/teacher-edit-assignment/${assignment._id}`, { title: trimmedTitle, description: trimmedDescription, dueDate });
-
-            const data = response.data;
+            const data = await updateAssignment(assignment._id, assignmentData);
+    
             setMessage(data.message);
-            if (response.status === 200) {
+    
+            if (data.message) {
                 navigate("/teacher-view-assignments", { state: { id: courseId } });
             }
         } catch (error) {
-            console.error('Error updating assignment:', error);
-            setMessage('Error updating assignment, please try again later.');
+            console.error("Error updating assignment:", error);
+            setMessage(error.message);
         }
     };
+    
     const formatDate = (date) => {
         return date.split("T")[0]
     };

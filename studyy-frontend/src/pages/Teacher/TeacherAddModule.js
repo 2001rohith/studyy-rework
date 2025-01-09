@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import TeacherSidebar from '../components/TeacherSidebar';
-import { useApiClient } from "../../utils/apiClient";
-import API_URL from '../../axiourl';
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext";
 import { Upload } from 'lucide-react';
 
 function TeacherAddModule() {
-    const apiClient = useApiClient()
+    const { addModuleL } = useCourseService()
     const location = useLocation();
     const navigate = useNavigate();
     const courseId = location.state?.courseId;
@@ -42,50 +41,48 @@ function TeacherAddModule() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+    
+        // Validate file inputs
         if (!pdfFile || !moduleVideoFile) {
             setMessage("Please select both PDF and video files");
             setShowToast(true);
             return;
         }
-
+    
         const formData = new FormData();
         formData.append('title', title);
         formData.append('description', description);
         formData.append('courseId', courseId);
         formData.append('pdf', pdfFile);
-        formData.append("video", moduleVideoFile);
-
+        formData.append('video', moduleVideoFile);
+    
         try {
             setLoading(true);
-            const response = await apiClient.post(`/course/teacher-add-module`, formData, {
-                onUploadProgress: (progressEvent) => {
-                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    setUploadProgress(prev => ({
-                        pdf: percentCompleted,
-                        video: percentCompleted
-                    }));
-                }
-            });
-
-            const data = response.data;
-            if (response.status === 200) {
-                setMessage(data.message);
-                setShowToast(true);
-                setTimeout(() => {
-                    navigate(`/teacher-view-course`, { state: { id: courseId } });
-                }, 2000);
-            } else {
-                setMessage(data.message || "Failed to add module");
-                setShowToast(true);
-            }
+    
+            const onUploadProgress = (progressEvent) => {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                setUploadProgress((prev) => ({
+                    pdf: percentCompleted,
+                    video: percentCompleted,
+                }));
+            };
+    
+            const data = await addModuleL(formData, onUploadProgress);
+            setMessage(data.message);
+            setShowToast(true);
+    
+            setTimeout(() => {
+                navigate(`/teacher-view-course`, { state: { id: courseId } });
+            }, 2000);
         } catch (error) {
-            console.log("Error uploading module", error);
-            setMessage("Error uploading files. Please try again.");
+            console.error("Error uploading module:", error);
+            setMessage(error.message);
             setShowToast(true);
         } finally {
             setLoading(false);
         }
     };
+    
 
     return (
         <>

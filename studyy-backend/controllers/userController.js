@@ -1,6 +1,7 @@
 const userService = require("../services/userService")
 const HttpStatus = require("../helpers/httpStatus");
 const userRepository = require("../repositories/userRepository");
+const constants = require("../helpers/constants")
 
 exports.signUp = async (req, res) => {
     const { name, email, password, phone } = req.body;
@@ -14,15 +15,15 @@ exports.signUp = async (req, res) => {
     } catch (error) {
         console.log(error.message);
 
-        if (error.message === "Invalid phone number format" ||
-            error.message === "User already exists!") {
+        if (error.message === constants.INVALID_PHONE ||
+            error.message === constants.USER_EXISTS) {
             return res.status(HttpStatus.BAD_REQUEST).json({
                 message: error.message
             });
         }
 
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            message: "Server error"
+            message: constants.SERVER_ERROR
         });
     }
 };
@@ -34,23 +35,22 @@ exports.verifyOtp = async (req, res) => {
         const { token } = await userService.verifyOtp(email, otp);
 
         res.status(HttpStatus.OK).json({
-            status: "ok",
             token,
             message: "OTP verified"
         });
     } catch (error) {
         console.log(error.message);
 
-        if (error.message === "User not found" ||
-            error.message === "Enter valid OTP" ||
-            error.message === "OTP has expired") {
+        if (error.message === constants.USER_NOT_FOUND ||
+            error.message === constants.ENTER_VALID_OTP ||
+            error.message === constants.OTP_EXPIRED) {
             return res.status(HttpStatus.BAD_REQUEST).json({
                 message: error.message
             });
         }
 
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            message: "OTP verification failed"
+            message: constants.SERVER_ERROR
         });
     }
 };
@@ -67,15 +67,15 @@ exports.resendOtp = async (req, res) => {
     } catch (error) {
         console.error(error.message);
 
-        if (error.message === "Invalid phone number format" ||
-            error.message === "No user found") {
+        if (error.message === constants.INVALID_PHONE ||
+            error.message === constants.USER_NOT_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({
                 message: error.message
             });
         }
 
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            message: "Failed to resend OTP"
+            message: constants.SERVER_ERROR
         });
     }
 };
@@ -99,7 +99,7 @@ exports.selectRole = async (req, res) => {
     } catch (error) {
         console.log(error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            message: 'Server error'
+            message: constants.SERVER_ERROR
         });
     }
 };
@@ -114,17 +114,17 @@ exports.login = async (req, res) => {
     } catch (error) {
         console.error("Login error:", error.message);
 
-        if (error.message === "User not found" ||
-            error.message === "Please verify your email before logging in" ||
-            error.message === "Invalid details" ||
-            error.message === "Your profile has been blocked!") {
+        if (error.message === constants.USER_NOT_FOUND ||
+            error.message === constants.VERIFY_EMAIL_BEFORE_LOGIN ||
+            error.message === constants.INVALID_DETAILS ||
+            error.message === constants.ACCOUNT_BLOCKED) {
             return res.status(HttpStatus.BAD_REQUEST).json({
                 message: error.message
             });
         }
 
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            message: "Server error"
+            message: constants.SERVER_ERROR
         });
     }
 };
@@ -135,7 +135,7 @@ exports.getUsers = async (req, res) => {
         res.status(HttpStatus.OK).json({ users, message: "user list for admin" })
     } catch (error) {
         console.error("get users error:", error.message);
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Server error" })
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR })
     }
 }
 
@@ -157,14 +157,14 @@ exports.updateUser = async (req, res) => {
     } catch (error) {
         console.error("Update user error:", error.message);
 
-        if (error.message === "User not found" ||
-            error.message === "Missing required fields") {
+        if (error.message === constants.USER_NOT_FOUND ||
+            error.message === constants.MISSING_FIELDS) {
             return res.status(HttpStatus.BAD_REQUEST).json({
                 message: error.message
             });
         }
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            message: "Server error"
+            message: constants.SERVER_ERROR
         });
     }
 };
@@ -178,14 +178,14 @@ exports.DeleteUser = async (req, res) => {
     } catch (error) {
         console.error("delete user error:", error.message);
 
-        if (error.message === "User not found") {
+        if (error.message === constants.USER_NOT_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({
                 message: error.message
             });
         }
 
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            message: "Server error"
+            message: constants.SERVER_ERROR
         });
     }
 }
@@ -197,10 +197,10 @@ exports.blockUser = async (req, res) => {
         res.status(HttpStatus.OK).json({ message });
     } catch (error) {
         console.log("error on blocking user:", error)
-        if (error.message === "User not found") {
+        if (error.message === constants.USER_NOT_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
         }
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Server error" });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 }
 
@@ -210,7 +210,7 @@ exports.getTeachers = async (req, res) => {
         res.status(HttpStatus.OK).json({ users, message: "teachers list for admin" })
     } catch (error) {
         console.error("get teacher error:", error.message);
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Server error" })
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR })
     }
 }
 
@@ -221,10 +221,10 @@ exports.verifyTeacher = async (req, res) => {
         res.status(HttpStatus.OK).json({ message });
     } catch (error) {
         console.log("error on verifying teacher:", error)
-        if (error.message === "User not found") {
+        if (error.message === constants.USER_NOT_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
         }
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Server error" });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR});
     }
 }
 
@@ -250,14 +250,14 @@ exports.forgotPassword = async (req, res) => {
     } catch (error) {
         console.error("Error in forgot password:", error);
 
-        if (error.message === "User not found") {
+        if (error.message === constants.USER_NOT_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({
                 message: error.message
             });
         }
 
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            message: "Server error"
+            message: constants.SERVER_ERROR
         });
     }
 }
@@ -275,15 +275,15 @@ exports.resetPassword = async (req, res) => {
     } catch (error) {
         console.error("Error in reset password:", error);
 
-        if (error.message === "Password and confirm password should be same!" ||
-            error.message === "Token is invalid or has expired") {
+        if (error.message === constants.PASSWORD_AND_CONFIRM_MISMATCH ||
+            error.message === constants.TOKEN_EXPIRED) {
             return res.status(HttpStatus.BAD_REQUEST).json({
                 message: error.message
             });
         }
 
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            message: "Server error"
+            message: constants.SERVER_ERROR
         });
     }
 };
@@ -301,15 +301,15 @@ exports.userChangePassword = async (req, res) => {
     } catch (error) {
         console.error("Error in reset password:", error);
 
-        if (error.message === "User not found" ||
-            error.message === "Wrong password!") {
+        if (error.message === constants.USER_NOT_FOUND ||
+            error.message === constants.WRONG_PASSWORD) {
             return res.status(HttpStatus.BAD_REQUEST).json({
                 message: error.message
             });
         }
 
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            message: "Server error"
+            message: constants.SERVER_ERROR
         });
     }
 };
@@ -323,14 +323,14 @@ exports.getProfieData = async (req, res) => {
     } catch (error) {
         console.error("Error in forgot password:", error);
 
-        if (error.message === "User not found") {
+        if (error.message === constants.USER_NOT_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({
                 message: error.message
             });
         }
 
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            message: "Server error"
+            message: constants.SERVER_ERROR
         });
     }
 }
@@ -342,14 +342,14 @@ exports.editProfile = async (req, res) => {
         const user = await userService.editProfile(userId,{name})
         res.status(HttpStatus.OK).json({ message: "Changes applied", user })
     } catch (error) {
-        if (error.message === "User not found") {
+        if (error.message === constants.USER_NOT_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({
                 message: error.message
             });
         }
         console.error("Error in edit profile:", error);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            message: "Server error"
+            message: constants.SERVER_ERROR
         });
     }
 }

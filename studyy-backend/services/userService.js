@@ -4,9 +4,9 @@ const { sendOTP } = require("../helpers/sendSMS")
 const { v4: uuidv4 } = require("uuid")
 const jwt = require("jsonwebtoken")
 const crypto = require("crypto")
+const constants = require("../helpers/constants")
 
 const userService = {
-
     async validatePhone(phone) {
         const phoneRegex = /^[6-9]\d{9}$/
         return phoneRegex.test(phone)
@@ -14,12 +14,12 @@ const userService = {
 
     async registerUser(userData) {
         if (!await this.validatePhone(userData.phone)) {
-            throw new Error("Invalid phone number format");
+            throw new Error(constants.INVALID_PHONE);
         }
 
         const existingUser = await userRepository.findByEmail(userData.email);
         if (existingUser) {
-            throw new Error("User already exists!");
+            throw new Error(constants.USER_EXISTS);
         }
 
         const hashedPassword = await bcrypt.hash(userData.password, 10);
@@ -38,15 +38,15 @@ const userService = {
     async verifyOtp(email, otp) {
         const user = await userRepository.findByEmail(email);
         if (!user) {
-            throw new Error("User not found");
+            throw new Error(constants.USER_NOT_FOUND);
         }
 
         if (Date.now() > user.otpExpires) {
-            throw new Error("OTP has expired");
+            throw new Error(constants.OTP_EXPIRED);
         }
 
         if (user.otp !== otp) {
-            throw new Error("Enter valid OTP");
+            throw new Error(constants.INVALID_OTP);
         }
 
         const verifiedUser = await userRepository.verifyUserOtp(user._id);
@@ -62,12 +62,12 @@ const userService = {
 
     async resendOtp(phone) {
         if (!await this.validatePhone(phone)) {
-            throw new Error("Invalid phone number format");
+            throw new Error(constants.INVALID_PHONE);
         }
 
         const user = await userRepository.findByPhone(phone);
         if (!user) {
-            throw new Error("No user found");
+            throw new Error(constants.USER_NOT_FOUND);
         }
 
         const { otp, otpExpires } = await sendOTP(phone);
@@ -111,22 +111,22 @@ const userService = {
     async login(email, password) {
         const user = await userRepository.findByEmail(email)
         if (!user) {
-            throw new Error("User not found");
+            throw new Error(constants.USER_NOT_FOUND);
         }
         if (!user.isVerified) {
-            throw new Error("Please verify your email before logging in");
+            throw new Error(constants.VERIFY_EMAIL_BEFORE_LOGIN);
         }
         if (user.otp !== null) {
             await userRepository.clearOtp(user._id)
         }
         const isPasswordValid = await user.comparePassword(password)
         if (!isPasswordValid) {
-            console.log("wrong password")
-            throw new Error("Invalid details");
+            console.log(constants.WRONG_PASSWORD)
+            throw new Error(constants.INVALID_DETAILS);
         }
         if (user.isBlocked === true) {
-            console.log("user blocked")
-            throw new Error("Your profile has been blocked!");
+            console.log(constants.ACCOUNT_BLOCKED)
+            throw new Error(constants.ACCOUNT_BLOCKED);
         }
         if (user.role === "teacher" && user.peerId === null) {
             user = await userRepository.updatePeerId(user._id, uuidv4());
@@ -151,7 +151,7 @@ const userService = {
     async getUsers() {
         const users = await userRepository.getUsers()
         if (!users) {
-            throw new Error("No users available");
+            throw new Error(constants.NO_USERS);
         }
         return users
     },
@@ -159,7 +159,7 @@ const userService = {
     async updateUser(userId, userData) {
         const { name, email, role } = userData
         if (!name || !email || !role) {
-            throw new Error("Missing required fields");
+            throw new Error(constants.MISSING_FIELDS);
         }
         const updatedUser = await userRepository.updateUser(userId, { name, email, role })
         return updatedUser
@@ -180,7 +180,7 @@ const userService = {
     async getTeachers() {
         const users = await userRepository.getTeachers()
         if (!users) {
-            throw new Error("No users available");
+            throw new Error(constants.NO_USERS);
         }
         return users
     },
@@ -196,7 +196,7 @@ const userService = {
     async initiatePasswordReset(email) {
         const user = await userRepository.findByEmail(email);
         if (!user) {
-            throw new Error("User not found");
+            throw new Error(constants.USER_NOT_FOUND);
         }
 
         const resetToken = user.createPasswordResetToken();
@@ -226,7 +226,7 @@ const userService = {
 
         const user = await userRepository.findByResetToken(hashedToken);
         if (!user) {
-            throw new Error("Token is invalid or has expired");
+            throw new Error(constants.TOKEN_EXPIRED);
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -243,12 +243,12 @@ const userService = {
         console.log("user from change password:", user);  // keeping your logging
 
         if (!user) {
-            throw new Error("User not found");
+            throw new Error(constants.USER_NOT_FOUND);
         }
 
         const isPasswordValid = await user.comparePassword(currentPassword);
         if (!isPasswordValid) {
-            throw new Error("Wrong password!");
+            throw new Error(constants.WRONG_PASSWORD);
         }
 
         const encryptedPassword = await bcrypt.hash(newPassword, 10);
@@ -261,7 +261,7 @@ const userService = {
         const user = await userRepository.findById(userId)
         console.log("user profile:", user)
         if (!user) {
-            throw new Error("User not found");
+            throw new Error(constants.USER_NOT_FOUND);
         }
         return {
             user,
@@ -272,7 +272,7 @@ const userService = {
     async editProfile(userId, userData) {
         const user = await userRepository.updateUser(userId, userData)
         if (!user) {
-            throw new Error("user not found")
+            throw new Error(constants.USER_NOT_FOUND)
         }
         return {
             id: user._id,

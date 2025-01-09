@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import TeacherSidebar from '../components/TeacherSidebar';
 import '../css/TeacherLiveClass.css';
 import io from 'socket.io-client';
-import { useApiClient } from "../../utils/apiClient"
+import { useCourseService } from '../../utils/courseService';
 import API_URL from '../../axiourl';
 import { useUser } from "../../UserContext"
 
@@ -12,8 +12,8 @@ import { useUser } from "../../UserContext"
 const socket = io(`${API_URL}`);
 
 function TeacherLiveClass() {
-    const apiClient = useApiClient()
-    const { user,token } = useUser();
+    const { savePeerId, updateClassStatus } = useCourseService()
+    const { user, token } = useUser();
     const [peerId, setPeerId] = useState('');
     const [isMuted, setIsMuted] = useState(false);
     const [isCameraOff, setIsCameraOff] = useState(false);
@@ -27,7 +27,7 @@ function TeacherLiveClass() {
     const [newMessage, setNewMessage] = useState('');
     const [showModal, setShowModal] = useState(false)
     const [hasUnread, setHasUnread] = useState(false);
-    const navigate = useNavigate(); 
+    const navigate = useNavigate();
     const location = useLocation();
     const classId = location.state?.classId;
     const courseId = location.state?.classId;
@@ -54,18 +54,11 @@ function TeacherLiveClass() {
         setNewMessage('');
     };
 
-    const sendPeerIdToBackend = async (Id) => {
+    const sendPeerIdToBackend = async (peerId) => {
         try {
-
-            const response = await apiClient.put(`/course/add-peerid/${classId}`, { peerId: Id });
-
-            if (response.status === 200) {
-                console.log('Peer ID saved successfully');
-            } else {
-                console.error('Failed to save Peer ID');
-            }
+            await savePeerId(classId, peerId);
         } catch (error) {
-            console.error('Error saving Peer ID:', error);
+            console.error("Error in handleSendPeerId:", error.message || error);
         }
     };
 
@@ -182,14 +175,14 @@ function TeacherLiveClass() {
             const updatedStreams = prevStreams.filter(
                 (streamObj) => streamObj.peerId !== studentPeerId
             );
-            
+
             const disconnectedStream = prevStreams.find(
                 (streamObj) => streamObj.peerId === studentPeerId
             );
             if (disconnectedStream && disconnectedStream.stream) {
                 disconnectedStream.stream.getTracks().forEach(track => track.stop());
             }
-            
+
             return updatedStreams;
         });
     };
@@ -218,16 +211,9 @@ function TeacherLiveClass() {
 
     const updateStatus = async () => {
         try {
-            
-            const response = await apiClient.put(`/course/update-class-status/${classId}`);
-
-            if (response.status === 200) {
-                console.log('Class status updated');
-            } else {
-                console.error('Failed to save Peer ID');
-            }
+            await updateClassStatus(classId);
         } catch (error) {
-            console.error('Failed to update class status', error);
+            console.error("Error in handleUpdateStatus:", error.message || error);
         }
     }
 
@@ -241,18 +227,18 @@ function TeacherLiveClass() {
                 });
                 setStream(null);
             }
-    
+
             // Clean up video input devices
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoInputDevices = devices.filter((device) => device.kind === "videoinput");
-    
+
                 if (videoInputDevices.length) {
                     const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
                     tempStream.getTracks().forEach((track) => track.stop());
                 }
             }
-    
+
             // Clean up all active calls
             if (peerInstance.current) {
                 // Close all active calls
@@ -270,7 +256,7 @@ function TeacherLiveClass() {
                 peerInstance.current.destroy();
                 peerInstance.current = null;
             }
-    
+
             // Clean up video elements
             if (currentUserVideoRef.current) {
                 if (currentUserVideoRef.current.srcObject) {
@@ -279,7 +265,7 @@ function TeacherLiveClass() {
                 }
                 currentUserVideoRef.current.srcObject = null;
             }
-    
+
             // Clean up student streams
             setStudentStreams(prevStreams => {
                 prevStreams.forEach(({ stream }) => {
@@ -289,11 +275,11 @@ function TeacherLiveClass() {
                 });
                 return [];
             });
-    
+
             // Notify server and update status
             socket.emit('end-live-class', { classId });
             await updateStatus();
-    
+
             navigate("/teacher-view-class-course", { replace: true });
         } catch (error) {
             console.error("Error during class cleanup:", error);
@@ -301,16 +287,16 @@ function TeacherLiveClass() {
             navigate("/teacher-view-class-course", { replace: true });
         }
     }
-    
+
     useEffect(() => {
         socket.emit('join-class', classId);
-    
+
         const handleBeforeUnload = () => {
             socket.emit('teacher-disconnected', { classId });
         };
-    
+
         window.addEventListener('beforeunload', handleBeforeUnload);
-    
+
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
             socket.emit('leave-class', classId);

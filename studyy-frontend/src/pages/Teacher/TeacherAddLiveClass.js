@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import TeacherSidebar from '../components/TeacherSidebar';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useApiClient } from "../../utils/apiClient"
-import API_URL from '../../axiourl';
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 
 
 
 const TeacherAddLiveClass = () => {
-    const apiClient = useApiClient()
+    const { addClass } = useCourseService()
     const navigate = useNavigate();
     const location = useLocation();
     const courseId = location.state?.id;
@@ -18,41 +17,35 @@ const TeacherAddLiveClass = () => {
     const [date, setDate] = useState('');
     const [time, setTime] = useState('');
     const [duration, setDuration] = useState('');
-    // const [isLive, setIsLive] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [showModal, setShowModal] = useState(false);  // State to control modal visibility
+    const [showModal, setShowModal] = useState(false);  
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-
+    
+        const classData = {
+            courseId,
+            title,
+            date,
+            time,
+            duration,
+            teacherId: user.id,
+        };
+    
         try {
-            
-            const response = await apiClient.post(`/course/add-class`, {
-                courseId,
-                title,
-                date,
-                time,
-                duration,
-                teacherId: user.id,
-            });
-
-            const data = response.data;
-            if (response.status === 200) {
-                setMessage(data.message);
-                setShowModal(true);  
-            } else {
-                setMessage(data.message);
-                setError('Failed to add the class');
-            }
-        } catch (err) {
-            setError('Server error, please try again later');
+            const data = await addClass(classData);
+            setMessage(data.message);
+            setShowModal(true); 
+        } catch (error) {
+            console.error("Error adding class:", error);
+            setError(error.message); 
         } finally {
-            setLoading(false);
+            setLoading(false); 
         }
     };
-
+    
     const goback = () => {
         navigate('/teacher-view-classes', { state: { id: courseId } });
     };

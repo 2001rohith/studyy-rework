@@ -2,18 +2,17 @@ import { useEffect, useState } from 'react';
 import TeacherSidebar from '../components/TeacherSidebar';
 import { useLocation, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client'
-import { useApiClient } from "../../utils/apiClient"
+import { useCourseService } from '../../utils/courseService';
 import API_URL from '../../axiourl';
 import { useUser } from "../../UserContext"
 
 const socket = io(`${API_URL}`);
 
 const TeacherEditQuiz = () => {
-    const apiClient = useApiClient()
-
+    const { getQuizDetails } = useCourseService()
     const location = useLocation();
     const navigate = useNavigate();
-    const { user,token } = useUser();
+    const { user, token } = useUser();
     const [teacherId, setTeacherId] = useState(user.id)
     const quizId = location.state?.quiz._id;
     const courseId = location.state?.courseId;
@@ -24,21 +23,14 @@ const TeacherEditQuiz = () => {
     useEffect(() => {
         const fetchQuizDetails = async () => {
             try {
-
-                const response = await apiClient.get(`/course/get-quiz/${quizId}`);
-
-                const data = response.data;
-                if (response.status === 200) {
-                    setQuizTitle(data.quiz.title);
-                    console.log("quiz title:", quizTitle)
-                    setQuestions(data.quiz.questions);
-                    setMessage('Edit the quiz details');
-                } else {
-                    setMessage('Failed to load quiz details');
-                }
+                const quizData = await getQuizDetails(quizId);
+                setQuizTitle(quizData.title);
+                console.log("Quiz title:", quizData.title);
+                setQuestions(quizData.questions);
+                setMessage("Edit the quiz details");
             } catch (error) {
-                console.error('Error fetching quiz details:', error);
-                setMessage('Error loading quiz details');
+                console.error("Error fetching quiz details:", error);
+                setMessage(error.message);
             }
         };
 
@@ -78,35 +70,30 @@ const TeacherEditQuiz = () => {
             return;
         }
 
-        const quizData = { title: trimmedTitle, questions, courseId, teacherId };
+        const quizData = {
+            title: trimmedTitle,
+            questions,
+            courseId,
+            teacherId,
+        };
 
         try {
+            const data = await updateQuiz(quizId, quizData);
+            setMessage("Quiz updated successfully!");
+            setShowToast(true);
+            setTimeout(() => {
+                navigate("/teacher-view-quizzes", { state: { id: courseId }, replace: true });
+            }, 1000);
 
-            const response = await apiClient.put(`/course/teacher-edit-quiz/${quizId}`, quizData);
-
-            const data = response.data;
-            if (response.status === 200) {
-                setMessage("Quiz updated successfully!");
-                setShowToast(true)
-                setTimeout(() => {
-                    navigate("/teacher-view-quizzes", { state: { id: courseId }, replace: true })
-                }, 1000);
-                socket.emit('notificationAdded', {
-                    courseId: courseId,
-                    teacherId: user.id,
-                });
-            } else {
-                setMessage(data.message || "Error occurred while updating the quiz.");
-            }
+            socket.emit("notificationAdded", {
+                courseId: courseId,
+                teacherId: user.id,
+            });
         } catch (error) {
-            console.error('Error updating quiz:', error);
-            setMessage("Server error. Please try again.");
+            console.error("Error updating quiz:", error);
+            setMessage(error.message);
         }
     };
-
-    // const goback = async () => {
-    //     navigate("/teacher-view-quizzes", { state: { id: courseId } });
-    // };
 
     return (
         <>

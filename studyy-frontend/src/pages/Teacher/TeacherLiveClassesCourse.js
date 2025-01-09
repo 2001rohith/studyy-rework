@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TeacherSidebar from '../components/TeacherSidebar'
-import { useApiClient } from "../../utils/apiClient"
+import { useCourseService } from '../../utils/courseService';
 import API_URL from '../../axiourl';
 import { useUser } from "../../UserContext"
 
 
 
 function TeacherLiveClassesCourses() {
-    const apiClient = useApiClient()
+    const { getCourses } = useCourseService()
     const navigate = useNavigate()
     const { user,token } = useUser();
     const [courses, setCourses] = useState([])
@@ -17,12 +17,9 @@ function TeacherLiveClassesCourses() {
     const [currentPage, setCurrentPage] = useState(1)
     const [coursePerPage] = useState(5)
 
-    const getCourses = async () => {
-        try {
-            
-            const response = await apiClient.get(`/course/get-courses`);
-
-            const data = response.data;
+    const fetchCourses = async () => {
+        try {         
+            const data = await getCourses()
             if (response.status === 200) {
                 setCourses(data.courses)
             } else {
@@ -41,7 +38,7 @@ function TeacherLiveClassesCourses() {
             navigate('/');
             return;
         }
-        getCourses()
+        fetchCourses()
     }, [])
 
     const indexOfLastCourse = currentPage * coursePerPage;

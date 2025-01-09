@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar2 from '../components/Sidebar2';
-import { useApiClient } from "../../utils/apiClient"
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 
 function AdminQuizzes() {
-  const apiClient = useApiClient()
+  const { adminFetchQuizzes, adminDeleteQuiz } = useCourseService()
   const navigate = useNavigate();
-  const { user,token } = useUser();
+  const { user, token } = useUser();
   const [quizzes, setQuizzes] = useState([]);
   const [allQuizzes, setAllQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,17 +19,10 @@ function AdminQuizzes() {
 
   const getQuizzes = async () => {
     try {
-      const response = await apiClient.get('/course/admin-get-quizzes');
-
-      const data = response.data;
-      if (response.status === 200) {
-        setQuizzes(data.quizzes);
-        setAllQuizzes(data.quizzes);
-        setLoading(false);
-      } else {
-        setError('No quizzes found or failed to fetch!');
-        setLoading(false);
-      }
+      const data = await adminFetchQuizzes()
+      setQuizzes(data);
+      setAllQuizzes(data);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching quizzes:', error);
       setError('Server error, please try again later.');
@@ -41,7 +34,7 @@ function AdminQuizzes() {
     if (!user || !token) {
       navigate('/');
       return;
-  }
+    }
     getQuizzes();
   }, []);
 
@@ -64,19 +57,16 @@ function AdminQuizzes() {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this quiz?')) return;
     try {
-        const response = await apiClient.delete(`/course/admin-delete-quiz/${id}`);
-        if (response.status === 200) {
-        alert('Quiz deleted successfully');
-        const updatedQuizzes = quizzes.filter((quiz) => quiz._id !== id);
-        setQuizzes(updatedQuizzes);
-        setAllQuizzes(updatedQuizzes);
+      await adminDeleteQuiz(id);
+      alert('Quiz deleted successfully');
+      const updatedQuizzes = quizzes.filter((quiz) => quiz._id !== id);
 
-        const indexOfLastQuiz = currentPage * quizPerPage;
-        const indexOfFirstQuiz = indexOfLastQuiz - quizPerPage;
-        setCurrentQuizzes(updatedQuizzes.slice(indexOfFirstQuiz, indexOfLastQuiz));
-      } else {
-        alert('Failed to delete quiz');
-      }
+      setQuizzes(updatedQuizzes);
+      setAllQuizzes(updatedQuizzes);
+
+      const indexOfLastQuiz = currentPage * quizPerPage;
+      const indexOfFirstQuiz = indexOfLastQuiz - quizPerPage;
+      setCurrentQuizzes(updatedQuizzes.slice(indexOfFirstQuiz, indexOfLastQuiz));
     } catch (error) {
       console.error('Error deleting quiz:', error);
     }
@@ -148,18 +138,18 @@ function AdminQuizzes() {
                 ))}
               </tbody>
             </table>
-          )}   
-            <nav>
-              <ul className="pagination">
-                {Array.from({ length: Math.ceil(allQuizzes.length / quizPerPage) }, (_, i) => (
-                  <li key={i + 1} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
-                    <button onClick={() => paginate(i + 1)} className="page-link">
-                      {i + 1}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+          )}
+          <nav>
+            <ul className="pagination">
+              {Array.from({ length: Math.ceil(allQuizzes.length / quizPerPage) }, (_, i) => (
+                <li key={i + 1} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
+                  <button onClick={() => paginate(i + 1)} className="page-link">
+                    {i + 1}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
       </div>
     </div>

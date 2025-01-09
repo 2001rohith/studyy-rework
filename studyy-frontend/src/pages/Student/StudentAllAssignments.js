@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StudentSidebar from '../components/StudentSidebar';
 import { useUser } from "../../UserContext";
-import { useApiClient } from "../../utils/apiClient";
+import { useCourseService } from '../../utils/courseService';
 
 function StudentAllAssignments() {
-    const apiClient = useApiClient();
+    const { studentFetchAssignments, submitAssignment } = useCourseService()
     const navigate = useNavigate();
     const { user, token } = useUser();
     const [loading, setLoading] = useState(true);
@@ -15,13 +15,10 @@ function StudentAllAssignments() {
     const [modal, setModal] = useState(false);
     const [message, setMessage] = useState("");
     const [assignmentDetails, setAssignmentDetails] = useState({ title: "", description: "", dueDate: "" });
-
-    // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 6; // Number of assignments per page
+    const itemsPerPage = 6;
 
-    // Calculate pagination details
-    const totalPages = Math.max(1, Math.ceil(assignments.length / itemsPerPage)); // Always show at least one page
+    const totalPages = Math.max(1, Math.ceil(assignments.length / itemsPerPage));
     const currentAssignments = assignments.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
@@ -32,22 +29,22 @@ function StudentAllAssignments() {
             navigate('/');
             return;
         }
+    
         const getAssignments = async () => {
             try {
-                const response = await apiClient.get(`/course/student-get-assignments/${user.id}`);
-                const data = response.data;
-                if (response.status === 200) {
-                    setAssignments(data.assignments);
-                    setLoading(false);
-                } else {
-                    console.log("Something went wrong:", data.message);
-                }
+                setLoading(true);
+                const assignments = await studentFetchAssignments(user.id);
+                setAssignments(assignments);
+                setLoading(false);
             } catch (error) {
-                console.log("Error in fetching assignments:", error);
+                console.error("Error in fetching assignments:", error.message);
+                setLoading(false);
             }
         };
+    
         getAssignments();
-    }, []);
+    }, [user, navigate]);
+    
 
     const handleFileUploadClick = (assignmentId) => {
         if (fileInputRefs.current[assignmentId]) {
@@ -58,24 +55,14 @@ function StudentAllAssignments() {
     const handleFileChange = async (e, assignmentId) => {
         const file = e.target.files[0];
         if (!file) {
-            alert('No file selected');
+            alert("No file selected");
             return;
         }
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('studentId', user.id);
-
+    
         try {
-            if (!token) {
-                throw new Error('Authentication token is missing');
-            }
-
-            const response = await apiClient.post(`/course/submit-assignment/${assignmentId}`, formData);
-            const data = response.data;
-
-            if (response.status === 200) {
-                setMessage("Assignment Uploaded");
+            const { success, message } = await submitAssignment(assignmentId, user.id, token, file);
+            if (success) {
+                setMessage(message);
                 setModal(false);
                 setShowToast(true);
                 setAssignments(prevAssignments =>
@@ -84,21 +71,23 @@ function StudentAllAssignments() {
                             ? {
                                 ...a,
                                 submissions: Array.isArray(a.submissions)
-                                    ? [...a.submissions, { student: user.id, filePath: 'path-to-file' }]
-                                    : [{ student: user.id, filePath: 'path-to-file' }],
+                                    ? [...a.submissions, { student: user.id, filePath: "path-to-file" }]
+                                    : [{ student: user.id, filePath: "path-to-file" }]
                             }
                             : a
                     )
                 );
             } else {
-                console.log("Error:", data.message);
-                setMessage(data.message);
+                setMessage(message);
                 setShowToast(true);
             }
         } catch (error) {
-            console.error('Error submitting assignment:', error.response ? error.response.data : error.message);
+            console.error("Error submitting assignment:", error.message);
+            setMessage(error.message);
+            setShowToast(true);
         }
     };
+    
 
     const openUploadModal = (assignment) => {
         setAssignmentDetails(assignment);
@@ -167,7 +156,6 @@ function StudentAllAssignments() {
                             </div>
                         </div>
                     </div>
-                    {/* Pagination controls */}
                     <div className="pagination-controls text-center mt-4">
                         {[...Array(totalPages).keys()].map((_, index) => (
                             <button

@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import StudentSidebar from '../components/StudentSidebar';
-import { useApiClient } from "../../utils/apiClient"
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 
 
 function StudentAttendQuiz() {
-  const apiClient = useApiClient()
+    const { submitQuiz } = useCourseService()
   const [loading, setLoading] = useState(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState({});
@@ -59,7 +59,7 @@ function StudentAttendQuiz() {
     if (currentQuestionIndex < quiz.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      submitQuiz();
+      handleSubmitQuiz();
     }
   };
 
@@ -69,26 +69,24 @@ function StudentAttendQuiz() {
     }
   };
 
-  const submitQuiz = async () => {
-    const submissionData = {
-      userId: user.id,
-      quizId: quiz._id,
-      score: score,
-    };
-
-    try {
-      const response = await apiClient.post(`/course/student-submit-quiz`, submissionData);
-
-      if (response.status === 200) {
-        alert('Quiz submitted successfully!');
-        navigate('/student-view-quizzes');
-      } else {
-        alert('Failed to submit quiz');
-      }
-    } catch (error) {
-      console.error('Error submitting quiz:', error);
+  const handleSubmitQuiz = async () => {
+    if (!user || !quiz) {
+        console.error("User or quiz not found.");
+        return;
     }
-  };
+    
+    try {
+        const isSuccess = await submitQuiz(user.id, quiz._id, score);
+
+        if (isSuccess) {
+            alert('Quiz submitted successfully!');
+            navigate('/student-view-quizzes');
+        }
+    } catch (error) {
+        console.error('Error submitting quiz:', error.message);
+        alert(error.message)
+    }
+}
 
   if (loading) {
     return <div>Loading quiz...</div>;

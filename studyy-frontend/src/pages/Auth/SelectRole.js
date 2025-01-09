@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useApiClient } from "../../utils/apiClient"
+import { useUserService } from '../../utils/userService'
 import { useUser } from "../../UserContext"
 
 
 const SelectRole = () => {
-  const apiClient = useApiClient()
+    const { roleSelection } = useUserService()
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedRole, setSelectedRole] = useState('');
@@ -19,37 +19,35 @@ const SelectRole = () => {
   const handleRoleSelection = async () => {
     try {
       if (selectedRole === 'teacher' && !certificate) {
-        setMessage('Upload a certificate as pdf!');
+        setMessage('Upload a certificate as PDF!');
         return;
       }
-
-      if (selectedRole && token) {
-        const formData = new FormData();
-        formData.append('role', selectedRole);
-        if (certificate) formData.append('certificate', certificate);
-
-        const response = await apiClient.post('/user/select-role', formData)
-
-        if (response.status === 200) {
-          const data = response.data
-          login(data.user, data.token)
-          const userData = { email, role: data.role }
-          if (data.role === 'teacher') {
-            navigate('/teacher-home', { state: { user: userData } });
-          } else if (data.role === 'student') {
-            navigate('/student-home', { state: { user: userData } });
-          }
-        } else {
-          setMessage(response.data.message || 'Something went wrong.');
-        }
-      } else {
-        console.error('Role or token is missing');
+  
+      if (!selectedRole || !token) {
+        setMessage('Role or token is missing.');
+        return;
       }
+  
+      const data = await roleSelection(selectedRole, certificate);
+  
+      login(data.user, data.token);
+      const userData = { email, role: data.role };
+  
+      const roleRoutes = {
+        teacher: '/teacher-home',
+        student: '/student-home',
+      };
+  
+      const route = roleRoutes[data.role] || '/';
+      navigate(route, { state: { user: userData } });
+  
+      setMessage('Role selected successfully!');
     } catch (error) {
       console.error('Error during role selection:', error);
-      setMessage('Error during role selection, please try again.');
+      setMessage(error.message || 'Error during role selection, please try again.');
     }
   };
+  
 
   return (
     <div className="wrapper">

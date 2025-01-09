@@ -1,5 +1,6 @@
 const quizRepository = require("../repositories/quizRepository")
 const courseRepository = require("../repositories/courseRepository")
+const constants = require("../helpers/constants")
 
 const quizService = {
     async addQuiz(quizData) {
@@ -11,7 +12,7 @@ const quizService = {
         const course = await courseRepository.findCourseById(courseId);
 
         if (!quizzes.length) {
-            throw new Error("No quizzes found for this course.");
+            throw new Error(constants.NO_QUIZ_FOR_COURSE);
         }
 
         return { quizzes, courseName: course.title };
@@ -20,7 +21,7 @@ const quizService = {
     async deleteQuiz(quizId) {
         const quiz = await quizRepository.deleteQuiz(quizId)
         if (!quiz) {
-            throw new Error("Quiz not found.")
+            throw new Error(constants.QUIZ_NOT_FOUND)
         }
     },
 
@@ -28,7 +29,7 @@ const quizService = {
         const quiz = await quizRepository.getQuizById(quizId);
 
         if (!quiz) {
-            throw new Error("quiz not found");
+            throw new Error(constants.QUIZ_NOT_FOUND);
         }
 
         return quiz;
@@ -37,12 +38,12 @@ const quizService = {
     async updateQuiz(quizId, updateData) {
         const quiz = await quizRepository.updateQuiz(quizId, updateData);
         if (!quiz) {
-            throw new Error("Quiz not found");
+            throw new Error(constants.QUIZ_NOT_FOUND);
         }
 
         const course = await courseRepository.findCourseById(updateData.courseId);
         if (!course) {
-            throw new Error("course not found");
+            throw new Error(constants.NO_COURSE_FOUND);
         }
 
         const teacher = await courseRepository.getTeacher(updateData.teacherId);
@@ -85,7 +86,7 @@ const quizService = {
     async adminDeleteQuiz(quizId) {
         const quiz = await quizRepository.deleteQuiz(quizId)
         if (!quiz) {
-            throw new Error("Quiz not found.")
+            throw new Error(constants.QUIZ_NOT_FOUND)
         }
     },
 
@@ -93,7 +94,7 @@ const quizService = {
         const student = await courseRepository.findStudentById(studentId);
 
         if (!student) {
-            throw new Error("Student not found");
+            throw new Error(constants.STUDENT_NOT_FOUND);
         }
 
         const courseIds = student.enrolledCourses.map(course => course._id);
@@ -123,7 +124,7 @@ const quizService = {
     async submitQuiz(userId, quizId, score) {
         const quiz = await quizRepository.getQuizById(quizId);
         if (!quiz) {
-            throw new Error("Quiz not found");
+            throw new Error(constants.QUIZ_NOT_FOUND);
         }
 
         const submission = {
@@ -144,7 +145,7 @@ async getQuizSubmissions(quizId) {
     const quiz = await quizRepository.getQuizById(quizId);
 
     if (!quiz) {
-        throw new Error("Quiz not found");
+        throw new Error(constants.QUIZ_NOT_FOUND);
     }
 
     return quiz.submissions.map(submission => ({

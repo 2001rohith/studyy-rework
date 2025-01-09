@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import StudentSidebar from '../components/StudentSidebar'
-import { useApiClient } from "../../utils/apiClient"
+import { useCourseService } from '../../utils/courseService';
 import API_URL from '../../axiourl';
 import { useUser } from "../../UserContext"
 
 function StudentViewCourse() {
-    const apiClient = useApiClient()
+    const { getCourseDetails } = useCourseService()
     const navigate = useNavigate()
     const location = useLocation()
     const { user, token } = useUser();
@@ -33,10 +33,7 @@ function StudentViewCourse() {
             console.log("course id again", courseId)
 
             try {
-
-                const response = await apiClient.get(`/course/get-course/${courseId}`);
-
-                const data = response.data;
+                const data = await getCourseDetails(courseId)
                 console.log("data from check course", data)
                 setCourse(data.course)
                 setModules(data.modules || [])

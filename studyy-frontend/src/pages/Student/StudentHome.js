@@ -2,53 +2,44 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import StudentSidebar from '../components/StudentSidebar'
 import Footer from "../components/Footer"
-import { useApiClient } from "../../utils/apiClient"
-
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 
 
 
 
 function StudentHome() {
-  const apiClient = useApiClient()
-
+  const { fetchCourses } = useCourseService()
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState([]);
   // const [user, setUser] = useState(null);
-  const { user,token,logout } = useUser();
-  console.log("user from context:",user)
+  const { user, token, logout } = useUser();
+  console.log("user from context:", user)
 
   useEffect(() => {
-    
-    if (!user|| !token) {
+
+    if (!user || !token) {
       navigate('/');
       return;
     }
 
     try {
-      // const parsedUser = JSON.parse(userDetails);
-      // console.log("user from student home:",parsedUser)
-      // setUser(parsedUser);
-      fetchCourses(user.id, token);
+      getCourses(user.id, token);
     } catch (error) {
       console.error('Error parsing user data:', error);
       navigate('/');
     }
   }, [navigate]);
 
-  const fetchCourses = async (userId, token) => {
+  const getCourses = async (userId, token) => {
     try {
-      const response = await apiClient.get(`/course/home-get-courses/${userId}`);
-      const data = response.data
-      console.log("response on fetching course for student home:",data)
-      if (response.status === 200) {
-        setCourses(data.courses);
-      }
+      const data = await fetchCourses(userId)
+      console.log("response on fetching course for student home:", data)
+      setCourses(data.courses);
     } catch (error) {
       console.error("Error fetching courses:", error);
       if (error.response?.status === 401) {
-        // Handle unauthorized access
         logout()
         navigate('/');
       }
@@ -65,7 +56,6 @@ function StudentHome() {
     navigate("/student-view-courses");
   };
 
-  // Show loading state while checking authentication and fetching data
   if (loading) {
     return (
       <div className="spinner-border text-primary spinner2" role="status">
@@ -74,7 +64,6 @@ function StudentHome() {
     );
   }
 
-  // Only render the main content if we have a user
   if (!user) {
     return null; // This shouldn't actually render because we redirect in useEffect
   }

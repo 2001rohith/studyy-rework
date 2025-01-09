@@ -1,4 +1,5 @@
 const Assignment = require("../models/assignmentModel")
+const constants = require("../helpers/constants")
 
 const assignmentRepository = {
     async getAssignmentsByCourseId(courseId) {
@@ -18,7 +19,7 @@ const assignmentRepository = {
     async updateAssignmentById(id, updateFields) {
         const updatedAssignment = await Assignment.findByIdAndUpdate(id, updateFields, { new: true });
         if (!updatedAssignment) {
-            throw new Error("Assignment not found");
+            throw new Error(constants.ASSIGNMENT_NOT_FOUND);
         }
         return updatedAssignment;
     },
@@ -26,7 +27,7 @@ const assignmentRepository = {
     async deleteAssignmentById(id) {
         const assignment = await Assignment.findByIdAndDelete(id);
         if (!assignment) {
-            throw new Error("Assignment not found");
+            throw new Error(constants.ASSIGNMENT_NOT_FOUND);
         }
         return assignment;
     },

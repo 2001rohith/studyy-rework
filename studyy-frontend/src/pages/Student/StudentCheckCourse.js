@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import StudentSidebar from '../components/StudentSidebar'
-import { useApiClient } from "../../utils/apiClient"
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 
 
 
 function StudentCheckCourse() {
-    const apiClient = useApiClient()
+    const { getCourseDetails, enrollCourse } = useCourseService()
     const navigate = useNavigate()
     const location = useLocation()
     const { user, token } = useUser();
@@ -22,58 +22,45 @@ function StudentCheckCourse() {
     const [confirmModal, setConfirmModal] = useState(false)
     console.log("course id", courseId)
 
-    
-
     useEffect(() => {
         if (!user) {
             navigate('/');
             return;
         }
-        const getCourse = async () => {
-            console.log("course id again", courseId)
-
+        const fetchCourse = async () => {
             try {
-
-                const response = await apiClient.get(`/course/get-course/${courseId}`);
-
-                const data = response.data;
-                console.log("data from check course", data)
-                setCourse(data.course)
-                setModules(data.modules || [])
-                setTeacher(data.teacher)
-                setLoading(false)
+                const data = await getCourseDetails(courseId);
+    
+                setCourse(data.course);
+                setModules(data.modules || []);
+                setTeacher(data.teacher);
+                setLoading(false);
             } catch (error) {
-                console.log("error in fetching course", error)
-                setLoading(false)
+                console.error("Error fetching course details:", error);
+                setLoading(false);
             }
-        }
-        getCourse()
-    }, [])
+        };
+    
+        fetchCourse();
+    }, [courseId, user, navigate]);
 
     const confirmEnroll = () => {
         setConfirmModal(true)
     }
 
-    const enrollCourse = async () => {
+    const enroll = async () => {
         try {
+            const data = await enrollCourse(user.id, courseId);
             
-            const response = await apiClient.post(`/course/student-enroll`, { studentId: user.id, courseId });
-
-            const data = response.data;
-            if (response.status === 200) {
-                console.log("data from check course", data)
-                setConfirmModal(false)
-                setShowModal(true)
-                setLoading(false)
-
-            } else {
-                alert("some error occured")
-            }
+            setConfirmModal(false);
+            setShowModal(true);
+            setLoading(false);
         } catch (error) {
-            console.log("error in fetching course", error)
-            setLoading(false)
+            console.error("Error enrolling in course:", error);
+            alert(error.message); 
+            setLoading(false);
         }
-    }
+    };
 
     const handleNavigate = () => {
         setShowModal(false)
@@ -152,7 +139,7 @@ function StudentCheckCourse() {
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn table-button" onClick={() => setConfirmModal(false)}>cancel</button>
-                                <button type="button" className="btn table-button" onClick={enrollCourse}>Confirm</button>
+                                <button type="button" className="btn table-button" onClick={enroll}>Confirm</button>
 
                             </div>
                         </div>

@@ -2,11 +2,12 @@ const courseRepository = require("../repositories/courseRepository")
 const moduleRepository = require("../repositories/moduleRepository")
 const userRepository = require("../repositories/userRepository")
 const sendEmail = require("../helpers/sendEmail")
+const constants = require("../helpers/constants")
 
 const courseService = {
     async getStudents() {
         const users = await courseRepository.getStudents()
-        if (!users) throw new Error("students not found")
+        if (!users) throw new Error(constants.STUDENTS_NOT_FOUND)
         return users
     },
 
@@ -14,7 +15,7 @@ const courseService = {
         const courses = await courseRepository.getCoursesByTeacher(teacherId)
 
         if (!courses) {
-            throw new Error("courses not found")
+            throw new Error(constants.COURSES_NOT_FOUND)
         }
 
         const coursesToSend = courses.map(course => ({
@@ -43,11 +44,11 @@ const courseService = {
     async createCourse(teacherId, courseData) {
         const { title, description } = courseData
         if (!teacherId) {
-            throw new Error("Unauthorized. Please log in.")
+            throw new Error(constants.UNAUTHORISED)
         }
         const teacher = await courseRepository.getTeacher(teacherId)
         if (teacher.isTeacherVerified === false) {
-            throw new Error("Only verified teachers can create a course.  Wait for your verification!")
+            throw new Error(constants.VERIFIED_TEACHER_ONLY)
         }
         const newCourse = {
             courseId: await this.generateRandomId(6),
@@ -65,12 +66,12 @@ const courseService = {
 
     async getCourseDetails(courseId) {
         if (!courseId) {
-            throw new Error("Invalid course ID");
+            throw new Error(constants.INVALID_COURSEID);
         }
 
         const course = await courseRepository.findCourseById(courseId);
         if (!course) {
-            throw new Error("no course found");
+            throw new Error(constants.NO_COURSE_FOUND);
         }
 
         const modules = await moduleRepository.findModulesByCourse(courseId);
@@ -81,7 +82,7 @@ const courseService = {
 
     async editCourse(courseId, courseData) {
         if (!courseId) {
-            throw new Error("Invalid course ID");
+            throw new Error(constants.INVALID_COURSEID);
         }
         const updatedCourse = await courseRepository.updateCourse(courseId, courseData);
         return updatedCourse;
@@ -108,12 +109,12 @@ const courseService = {
 
     async getCourseForAdmin(courseId) {
         if (!courseId) {
-            throw new Error("Invalid course ID");
+            throw new Error(constants.INVALID_COURSEID);
         }
 
         const course = await courseRepository.findCourseById(courseId);
         if (!course) {
-            throw new Error("Course not found");
+            throw new Error(constants.NO_COURSE_FOUND);
         }
 
         const modules = await courseRepository.getModulesByCourseId(courseId);
@@ -134,7 +135,7 @@ const courseService = {
         const course = await courseRepository.findCourseById(courseId);
 
         if (!student || !course) {
-            throw new Error("Course or student not found");
+            throw new Error(constants.COURSE_OR_STUDENT_NOT_FOUND);
         }
 
         if (!course.studentsEnrolled.includes(studentId)) {
@@ -151,7 +152,7 @@ const courseService = {
     async getEnrolledCourses(userId) {
         const student = await courseRepository.findStudentById(userId);
         if (!student) {
-            throw new Error("User not found");
+            throw new Error(constants.USER_NOT_FOUND);
         }
         return student.enrolledCourses;
     },
@@ -161,7 +162,7 @@ const courseService = {
         const course = await courseRepository.findCourseById(courseId);
 
         if (!course) {
-            throw new Error("Course not found");
+            throw new Error(constants.NO_COURSE_FOUND);
         }
 
         const notificationData = {
@@ -180,7 +181,7 @@ const courseService = {
         const student = await courseRepository.findStudentById(studentId)
 
         if (!student) {
-            throw new Error("Student not found");
+            throw new Error(constants.STUDENT_NOT_FOUND);
         }
 
         const courseIds = student.enrolledCourses.map(course => course._id);
@@ -196,7 +197,7 @@ const courseService = {
         const result = await courseRepository.markNotificationsAsRead(notificationIds, studentId);
 
         if (result.modifiedCount === 0) {
-            throw new Error("No notifications were updated");
+            throw new Error(constants.NOTIFICATION_NOT_UPDATED);
         }
 
         return result;
@@ -206,7 +207,7 @@ const courseService = {
         const course = await courseRepository.findCourseById(courseId);
 
         if (!course) {
-            throw new Error("Course not found");
+            throw new Error(constants.NO_COURSE_FOUND);
         }
 
         return course.studentsEnrolled;
@@ -216,7 +217,7 @@ const courseService = {
         const course = await courseRepository.findCourseById(courseId);
 
         if (!course) {
-            throw new Error('Course not found');
+            throw new Error(constants.NO_COURSE_FOUND);
         }
 
         const studentEmails = course.studentsEnrolled.map(student => student.email);
@@ -232,15 +233,14 @@ const courseService = {
         return { failedEmails, totalEmails: studentEmails.length };
     },
 
-    async getHomeCourses(userId) {
-        const courses = await courseRepository.findCoursesNotEnrolledByUser(userId);
-
-        if (courses.length === 0) {
-            throw new Error('No courses available');
+    async getHomeCourses(userId, { search, modulesFilter, page, limit }) {
+        const coursesData = await courseRepository.findCoursesNotEnrolledByUser(userId, { search, modulesFilter, page, limit });
+        if (coursesData.courses.length === 0) {
+            throw new Error(constants.COURSES_NOT_FOUND);
         }
-
-        return courses;
+        return coursesData;
     }
+    
 
 
 

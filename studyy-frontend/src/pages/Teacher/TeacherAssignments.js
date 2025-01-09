@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import TeacherSidebar from '../components/TeacherSidebar';
-import { useApiClient } from "../../utils/apiClient"
-import API_URL from '../../axiourl';
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 
 
 
 function TeacherAssignments() {
-    const apiClient = useApiClient()
-
+    const { fetchAssignments, deleteAssignment } = useCourseService()
     const navigate = useNavigate();
     const location = useLocation();
     const cId = location.state?.id;
-    const { user,token } = useUser();
+    const { user, token } = useUser();
     const [courseId] = useState(cId);
     const [assignments, setAssignments] = useState([]);
     const [courseName, setCourseName] = useState('');
@@ -33,17 +31,9 @@ function TeacherAssignments() {
 
     const getAssignments = async () => {
         try {
-
-            const response = await apiClient.get(`/course/get-assignments/${courseId}`);
-
-            const data = response.data;
-            if (response.status === 200) {
-                setAssignments(data.assignments);
-                setCourseName(data.course);
-            } else {
-                setCourseName(data.course);
-                setError(data.message || 'Failed to fetch assignments');
-            }
+            const data = await fetchAssignments(courseId)
+            setAssignments(data.assignments);
+            setCourseName(data.course);
         } catch (error) {
             setError('Server error, please try again later');
         } finally {
@@ -74,22 +64,16 @@ function TeacherAssignments() {
 
     const handleDelete = async (id) => {
         try {
-            const response = await apiClient.delete(`/course/teacher-delete-assignment/${assnId}`);
-
-            const data = response.data;
-            if (response.status === 200) {
-                setAssignments((prev) => prev.filter((assignment) => assignment._id !== assnId));
-                setDeleteModal(!deleteModal)
-                setAssnId("")
-                setMessage(data.message)
-                setShowToast(!showToast)
-                setTimeout(() => {
-                    setMessage("")
-                    setShowToast(false)
-                }, 5000);
-            } else {
-                alert('Failed to delete course');
-            }
+            await deleteAssignment(id)
+            setAssignments((prev) => prev.filter((assignment) => assignment._id !== assnId));
+            setDeleteModal(!deleteModal)
+            setAssnId("")
+            setMessage(data.message)
+            setShowToast(!showToast)
+            setTimeout(() => {
+                setMessage("")
+                setShowToast(false)
+            }, 5000);
         } catch (error) {
             console.log('Error in deleting course', error);
         }
@@ -98,16 +82,9 @@ function TeacherAssignments() {
     const getSubmissions = async (id) => {
         setLoading(true);
         try {
-
-            const response = await apiClient.get(`/course/get-assignment-submissions/${id}`);
-
-            const data = response.data;
-            if (response.status === 200) {
-                setSubmissions(data.submissions);
-                setModal(true); 
-            } else {
-                setError(data.message || 'Failed to fetch submissions');
-            }
+            const data = await getAssignmentSubmission(id)
+            setSubmissions(data.submissions);
+            setModal(true);
         } catch (error) {
             setError('Server error, please try again later');
         } finally {
@@ -201,16 +178,16 @@ function TeacherAssignments() {
                         </table>
                     )}
                     <nav>
-                            <ul className="pagination">
-                                {Array.from({ length: Math.ceil(assignments.length / assignmentsPerPage) }, (_, i) => (
-                                    <li key={i + 1} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
-                                        <button onClick={() => paginate(i + 1)} className="page-link">
-                                            {i + 1}
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </nav>
+                        <ul className="pagination">
+                            {Array.from({ length: Math.ceil(assignments.length / assignmentsPerPage) }, (_, i) => (
+                                <li key={i + 1} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
+                                    <button onClick={() => paginate(i + 1)} className="page-link">
+                                        {i + 1}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
                 </div>
             </div>
             {modal && (

@@ -1,4 +1,5 @@
 const User = require("../models/userModel")
+const constants = require("../helpers/constants")
 
 const userRepository = {
 
@@ -22,7 +23,7 @@ const userRepository = {
             { new: true }
         );
         if (!updatedUser) {
-            throw new Error("User not found");
+            throw new Error(constants.USER_NOT_FOUND);
         }
         
         return updatedUser
@@ -35,7 +36,7 @@ const userRepository = {
     async deleteUser(id) {
         const user = await User.findByIdAndDelete(id)
         if(!user){
-            throw new Error("User not found")
+            throw new Error(constants.USER_NOT_FOUND)
         }
         return user
     },
@@ -96,7 +97,7 @@ const userRepository = {
     async blockUser(userId){
         const user = await User.findById(userId)
         if(!user){
-            throw new Error("user not found")
+            throw new Error(constants.USER_NOT_FOUND)
         }
         user.isBlocked = !user.isBlocked
         return await user.save()
@@ -105,7 +106,7 @@ const userRepository = {
     async verifyTeacher(userId){
         const user = await User.findById(userId)
         if(!user){
-            throw new Error("user not found")
+            throw new Error(constants.USER_NOT_FOUND)
         }
         user.isTeacherVerified = !user.isTeacherVerified
         return await user.save()

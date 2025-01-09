@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StudentSidebar from '../components/StudentSidebar';
-import { useApiClient } from "../../utils/apiClient";
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext";
 
 function StudentAllQuizzes() {
-    const apiClient = useApiClient();
+    const { studentFetchQuizzes } = useCourseService()
     const navigate = useNavigate();
     const { user, token } = useUser();
     const [loading, setLoading] = useState(true);
     const [quizzes, setQuizzes] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 6; // Number of quizzes per page
+    const itemsPerPage = 6; 
 
-    // Calculate pagination details
     const totalPages = Math.max(1, Math.ceil(quizzes.length / itemsPerPage)); // Always show at least one page
     const currentQuizzes = quizzes.slice(
         (currentPage - 1) * itemsPerPage,
@@ -27,21 +26,18 @@ function StudentAllQuizzes() {
                 return;
             }
             try {
-                const response = await apiClient.get(`/course/student-get-quizzes/${user.id}`);
-                const data = response.data;
-
-                if (response.status === 200) {
-                    setQuizzes(data.quizzes);
-                    setLoading(false);
-                } else {
-                    console.log("Something went wrong:", data.message);
-                }
+                setLoading(true);
+                const quizzes = await studentFetchQuizzes(user.id);
+                setQuizzes(quizzes);
             } catch (error) {
-                console.log("Error in fetching quizzes:", error);
+                console.error("Error in fetching quizzes:", error.message);
+            } finally {
+                setLoading(false);
             }
         };
         getQuizzes();
-    }, [user, navigate, apiClient]);
+    }, [user, navigate]);
+    
 
     const handleAttend = (quiz) => {
         navigate("/attend-quiz", { state: { quiz } });

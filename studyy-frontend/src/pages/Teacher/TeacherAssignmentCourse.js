@@ -1,35 +1,26 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TeacherSidebar from '../components/TeacherSidebar'
-import { useApiClient } from "../../utils/apiClient"
-import API_URL from '../../axiourl';
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 
 
 function TeacherAssignmentsCourses() {
-    const apiClient = useApiClient()
+    const { getCourses } = useCourseService()
     const navigate = useNavigate()
-    const { user,token } = useUser();
+    const { user, token } = useUser();
     const [courses, setCourses] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [currentPage, setCurrentPage] = useState(1)
     const [coursePerPage] = useState(5)
 
-    
 
-    const getCourses = async () => {
+
+    const fetchCourses = async () => {
         try {
-            
-            const response = await apiClient.get(`/course/get-courses`);
-
-            const data = response.data;
-            if (response.status === 200) {
-                setCourses(data.courses)
-            } else {
-                setError('No courses or failed to fetch!')
-            }
-
+            const data = await getCourses()
+            setCourses(data.courses)
         } catch (error) {
             setError('Server error, please try again later')
         } finally {
@@ -42,7 +33,7 @@ function TeacherAssignmentsCourses() {
             navigate('/');
             return;
         }
-        getCourses()
+        fetchCourses()
     }, [])
 
     const indexOfLastCourse = currentPage * coursePerPage;

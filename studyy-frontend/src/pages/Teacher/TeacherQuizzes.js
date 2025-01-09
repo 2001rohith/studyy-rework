@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import TeacherSidebar from '../components/TeacherSidebar';
-import { useApiClient } from "../../utils/apiClient";
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext";
 
 function TeacherQuizzes() {
-    const apiClient = useApiClient();
+    const { fetchQuizzes, deleteQuiz, fetchQuizSubmissions } = useCourseService()
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useUser();
@@ -29,24 +29,20 @@ function TeacherQuizzes() {
             return;
         }
 
-        const fetchQuizzes = async () => {
+        const getQuizzes = async () => {
+            setLoading(true);
             try {
-                const response = await apiClient.get(`/course/get-quizzes/${courseId}`);
-                const data = response.data;
-                if (response.status === 200) {
-                    setQuizzes(data.quizzes);
-                    setCourseName(data.courseName);
-                } else {
-                    setError(data.message || 'Failed to fetch quizzes');
-                }
+                const { quizzes, courseName } = await fetchQuizzes(courseId);
+                setQuizzes(quizzes);
+                setCourseName(courseName);
             } catch (error) {
-                setError('Server error, please try again later');
+                setError(error.message || "Server error, please try again later");
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchQuizzes();
+        getQuizzes();
     }, [courseId, user, navigate]);
 
     const addQuiz = () => navigate("/teacher-add-quiz", { state: { id: courseId } });
@@ -60,17 +56,12 @@ function TeacherQuizzes() {
 
     const handleDelete = async () => {
         try {
-            const response = await apiClient.delete(`/course/teacher-delete-quiz/${quizId}`);
-            const data = response.data;
-            if (response.status === 200) {
-                setQuizzes(quizzes.filter((quiz) => quiz._id !== quizId));
-                setMessage(data.message);
-                setShowToast(true);
-            } else {
-                setError('Failed to delete quiz');
-            }
+            const message = await deleteQuiz(quizId);
+            setQuizzes(quizzes.filter((quiz) => quiz._id !== quizId));
+            setMessage(message);
+            setShowToast(true);
         } catch (error) {
-            setError('Server error, please try again later');
+            setError(error.message || "Server error, please try again later");
         } finally {
             setDeleteModal(false);
             setQuizId("");
@@ -79,18 +70,13 @@ function TeacherQuizzes() {
 
     const getSubmissions = async (quizId) => {
         try {
-            const response = await apiClient.get(`/course/get-quiz-submissions/${quizId}`);
-            const data = response.data;
-            if (response.status === 200) {
-                setSubmissions(data.submissions);
-                setModal(true);
-            } else {
-                setError('Failed to fetch submissions');
-            }
+            const submissions = await fetchSubmissions(quizId);
+            setSubmissions(submissions);
+            setModal(true);
         } catch (error) {
-            setError('Server error, please try again later');
+            setError(error.message || "Server error, please try again later");
         }
-    };
+    }
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 

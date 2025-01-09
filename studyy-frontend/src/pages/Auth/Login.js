@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useApiClient } from "../../utils/apiClient"
+import { useUserService } from '../../utils/userService'
 import { useUser } from "../../UserContext"
 import API_URL from '../../axiourl';
 
 
 
 function Login() {
-    const apiClient = useApiClient()
+    const { handleLogin } = useUserService()
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
@@ -42,21 +42,18 @@ function Login() {
                 return;
             }
 
-            const response = await apiClient.post('/user/login', { email, password });
-            const data = response.data;
-            setMessage(data.message);
-
-            console.log("data from login:", data)
-            if (response.status === 200) {
-                login(data.user, data.token)
-
-                if (data.user.role === 'admin') {
-                    navigate('/admin-home', { state: { user: data.user }, replace: true });
-                } else if (data.user.role === 'teacher') {
-                    navigate('/teacher-home', { state: { user: data.user }, replace: true });
-                } else {
-                    navigate('/student-home', { state: { user: data.user }, replace: true });
-                }
+            const data = await handleLogin(email, password); 
+            if (!data || !data.user || !data.token) {
+                setMessage(data.message || "Login failed!");
+            }
+            setMessage(data.message || "Login successful!");
+            login(data.user, data.token)
+            if (data.user.role === 'admin') {
+                navigate('/admin-home', { state: { user: data.user }, replace: true });
+            } else if (data.user.role === 'teacher') {
+                navigate('/teacher-home', { state: { user: data.user }, replace: true });
+            } else {
+                navigate('/student-home', { state: { user: data.user }, replace: true });
             }
         } catch (error) {
             console.error('Error during login:', error);
@@ -65,7 +62,7 @@ function Login() {
     };
 
     const googleLogin = () => {
-        window.location.href = `${API_URL}/user/auth/google`; // Use the directly specified API URL for Google login
+        window.location.href = `${API_URL}/user/auth/google`
     };
 
     return (

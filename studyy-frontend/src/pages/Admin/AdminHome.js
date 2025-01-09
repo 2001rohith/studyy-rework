@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
-import axios from 'axios';
-import { useApiClient } from "../../utils/apiClient"
+import { useUserService } from '../../utils/userService'
 import { useUser } from "../../UserContext"
 
-
 function AdminHome() {
-    const apiClient = useApiClient()
+    const { adminFetchUsers, adminDeleteUser, adminBloackUser } = useUserService()
     const navigate = useNavigate()
-    const { user,token } = useUser();
+    const { user, token } = useUser();
     const [users, setUsers] = useState([])
     const [filteredUsers, setFilteredUsers] = useState([])
     const [searchEmail, setSearchEmail] = useState('')
@@ -23,8 +21,6 @@ function AdminHome() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [isBlocking, setIsBlocking] = useState(false);
 
-    
-    
     useEffect(() => {
         if (!user || !token) {
             navigate('/');
@@ -32,10 +28,9 @@ function AdminHome() {
         }
         const getUsers = async () => {
             try {
-                const response = await apiClient.get('/user/get-users');
-                const data = response.data;
-                setUsers(data.users)
-                setFilteredUsers(data.users)
+                const data = await adminFetchUsers()
+                setUsers(data)
+                setFilteredUsers(data)
             } catch (error) {
                 console.log("error in fetching users from admin", error)
             }
@@ -78,50 +73,32 @@ function AdminHome() {
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-
-    // const handleEdit = async (user) => {
-    //     navigate("/admin-edit-user", { state: { user } })
-    // }
     const handleDelete = async () => {
         try {
-            const response = await apiClient.delete(`/user/admin-delete-user/${selectedUser._id}`);
-
-            if (response.status === 200) {
-                setToastMessage("User deleted successfully");
-                setShowToast(true);
-                setUsers(users.filter(user => user._id !== selectedUser._id));
-                setShowDeleteModal(false);
-                // navigate(0)
-            }
+            await adminDeleteUser(selectedUser._id)
+            setToastMessage("User deleted successfully");
+            setShowToast(true);
+            setUsers(users.filter(user => user._id !== selectedUser._id));
+            setShowDeleteModal(false);
         } catch (error) {
             console.log("error in fetching users from admin", error)
         }
-
     }
 
-
-
     const handleBlock = async () => {
-
         try {
-            const response = await apiClient.put(`/user/admin-block-user/${selectedUser._id}`);
-
-            const data = response.data;
-            if (response.status === 200) {
-                setToastMessage(data.message)
-                setShowToast(true);
-                const updatedUsers = users.map(user =>
-                    user._id === selectedUser._id ? { ...user, isBlocked: !user.isBlocked } : user
-                );
-                setUsers(updatedUsers);
-                setShowBlockModal(false);
-            }
+            const data = await adminBloackUser(selectedUser._id)
+            setToastMessage(data.message)
+            setShowToast(true);
+            const updatedUsers = users.map(user =>
+                user._id === selectedUser._id ? { ...user, isBlocked: !user.isBlocked } : user
+            );
+            setUsers(updatedUsers);
+            setShowBlockModal(false);
         } catch (error) {
             console.error("Error during blocking/unblocking:", error);
         }
-
     };
-
 
     return (
         <>

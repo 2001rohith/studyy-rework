@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar2 from '../components/Sidebar2';
-import { useApiClient } from "../../utils/apiClient"
+import { useUserService } from '../../utils/userService'
 import { useUser } from "../../UserContext"
 import API_URL from '../../axiourl';
 
 
 function AdminTeachers() {
-    const apiClient = useApiClient()
+    const { adminFetchTeachers, adminVerifyTeacher } = useUserService()
     const navigate = useNavigate();
-    const { user,token } = useUser();
+    const { user, token } = useUser();
     const [users, setUsers] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
     const [searchEmail, setSearchEmail] = useState('');
@@ -23,7 +23,7 @@ function AdminTeachers() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    
+
 
     useEffect(() => {
         if (!user || !token) {
@@ -32,19 +32,15 @@ function AdminTeachers() {
         }
         const getTeachers = async () => {
             try {
-                const response = await apiClient.get('/user/get-teachers');
-
-                const data = response.data;
-                setUsers(data.users);
-                setFilteredUsers(data.users);
+                const data = await adminFetchTeachers()
+                setUsers(data);
+                setFilteredUsers(data);
                 setLoading(false);
             } catch (error) {
-                console.error("Error in fetching teachers:", error);
-                setError('Unable to fetch teacher data. Please try again later.');
+                console.log("Error in fetching teachers:", error);
                 setLoading(false);
             }
         };
-
         getTeachers();
     }, []);
 
@@ -90,14 +86,8 @@ function AdminTeachers() {
 
     const handleVerification = async (userId) => {
         try {
-
-            const response = await apiClient.put(`/user/admin-verify-teacher/${userId}`);
-
-            if (response.status === 200) {
-                navigate(0);
-            } else {
-                alert('Failed to verify/unverify teacher');
-            }
+            await adminVerifyTeacher(userId)
+            navigate(0);
         } catch (error) {
             console.error("Error during verification/unverification:", error);
         }

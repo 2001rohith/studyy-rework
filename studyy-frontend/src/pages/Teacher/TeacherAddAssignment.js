@@ -1,14 +1,13 @@
 import { useState,useEffect } from 'react';
 import TeacherSidebar from '../components/TeacherSidebar';
 import { useLocation, useNavigate } from 'react-router-dom';
-import API_URL from '../../axiourl';
-import { useApiClient } from "../../utils/apiClient"
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 
 
 
 const TeacherAddAssignment = () => {
-    const apiClient = useApiClient()
+    const { createAssignment } = useCourseService()
     const location = useLocation();
     const navigate = useNavigate()
     const { user,token } = useUser();
@@ -28,30 +27,30 @@ const TeacherAddAssignment = () => {
         }
       },[])
 
-    const handleSubmit = async (e) => {
+      const handleSubmit = async (e) => {
         e.preventDefault();
         const trimmedTitle = title.trim();
-
+    
         if (!trimmedTitle) {
             setMessage("Please provide valid details.");
             return;
         }
-
+    
+        const assignmentData = {
+            title: trimmedTitle,
+            description,
+            dueDate: deadlineDate,
+            courseId,
+        };
+    
         try {
-            
-            const response = await apiClient.post(`/course/create-assignment`, { title: trimmedTitle, description, dueDate: deadlineDate, courseId });
-
-            const data = response.data;
-            if (response.status === 200) {
-                setMessage(data.message)
-            } else {
-                setMessage(data.message || "Error occurred while creating the assignment.");
-            }
+            const data = await createAssignment(assignmentData);
+            setMessage(data.message);
         } catch (error) {
             console.error('Error creating assignment:', error);
-            setMessage("Error occurred while creating the assignment.");
+            setMessage(error.message || "Error occurred while creating the assignment.");
         }
-    };
+    };    
 
     const goback = async () => {
         navigate("/teacher-view-assignments", { state: { id: courseId } })

@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApiClient } from "../../utils/apiClient"
+import { useUserService } from '../../utils/userService'
 
 
 function ForgotPassword() {
-    const apiClient = useApiClient()
+    const { forgotPassword } = useUserService()
     const [email, setEmail] = useState('');
     const Navigate = useNavigate()
-
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await apiClient.post("/user/forgot-password", { email })
+            await forgotPassword(email)
             Navigate("/")
         } catch (error) {
             console.error("Error sending forgot password request:", error);

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StudentSidebar from '../components/StudentSidebar';
-import { useApiClient } from "../../utils/apiClient";
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext";
 
 function StudentClasses() {
-    const apiClient = useApiClient();
+    const { studentGetClasses } = useCourseService()
     const navigate = useNavigate();
     const { user, token } = useUser();
     const [loading, setLoading] = useState(true);
@@ -14,11 +14,9 @@ function StudentClasses() {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState("");
 
-    // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 6; // Number of classes per page
+    const itemsPerPage = 6
 
-    // Calculate pagination details
     const totalPages = Math.max(1, Math.ceil(classes.length / itemsPerPage));
     const currentClasses = classes.slice(
         (currentPage - 1) * itemsPerPage,
@@ -30,25 +28,25 @@ function StudentClasses() {
             navigate('/');
             return;
         }
-        const getClasses = async () => {
-            try {
-                const response = await apiClient.get(`/course/student-get-classes/${user.id}`);
-                const data = response.data;
-
-                if (response.status === 200) {
+            const getClasses = async () => {
+                try {
+                    if (!user || !user.id) {
+                        setError('User information not found');
+                        return;
+                    }
+        
+                    const data = await studentGetClasses(user.id);
                     setClasses(data.classes);
-                } else {
-                    setError(data.message || "Failed to fetch classes");
+                } catch (error) {
+                    console.error("Error fetching classes:", error);
+                    setError(error.message || 'An unexpected error occurred while fetching classes.');
+                } finally {
+                    setLoading(false);
                 }
-            } catch (err) {
-                setError("An unexpected error occurred while fetching classes.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
+            };
+        
         getClasses();
-    }, [user.id, apiClient, navigate]);
+    }, [user.id, navigate]);
 
     const HandleJoinClass = (id, peerId, status, title) => {
         if (!peerId) {

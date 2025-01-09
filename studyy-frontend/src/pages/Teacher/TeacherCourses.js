@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import TeacherSidebar from '../components/TeacherSidebar'
 import io from 'socket.io-client'
-import { useApiClient } from "../../utils/apiClient"
+import { useCourseService } from '../../utils/courseService';
 import API_URL from '../../axiourl';
 import { useUser } from "../../UserContext"
 import Table from '../components/Table'
@@ -10,9 +10,9 @@ import Table from '../components/Table'
 const socket = io(`${API_URL}`);
 
 function TeacherCourses() {
-  const apiClient = useApiClient()
+  const { getCourses, deleteCourse, createNotification, createEmailNotification } = useCourseService()
   const navigate = useNavigate()
-  const { user,token } = useUser();
+  const { user, token } = useUser();
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -30,20 +30,13 @@ function TeacherCourses() {
   const [emailModal, setEmailModal] = useState(false)
   console.log("user from local storage:", user)
 
-  
-  
-  const getCourses = async () => {
+
+
+  const fetchCourses = async () => {
     try {
+      const data = await getCourses()
 
-      const response = await apiClient.get(`/course/get-courses`);
-
-      const data = response.data;
-      if (response.status === 200) {
-        setCourses(data.courses)
-      } else {
-        setError('No courses or failed to fetch!')
-      }
-
+      setCourses(data.courses)
     } catch (error) {
       console.log("error in fetching courses for teacher", error)
       setError('Server error, please try again later')
@@ -56,9 +49,9 @@ function TeacherCourses() {
     if (!user) {
       navigate('/');
       return;
-  }
-  
-    getCourses()
+    }
+
+    fetchCourses()
   }, [])
 
   const indexOfLastCourse = currentPage * coursePerPage;
@@ -74,18 +67,12 @@ function TeacherCourses() {
 
   const handleDelete = async (id) => {
     try {
+      const data = await deleteCourse(selectedCourse)
 
-      const response = await apiClient.delete(`/course/teacher-delete-course/${selectedCourse}`);
-
-      const data = response.data;
-      if (response.status === 200) {
-        setMessage(data.message)
-        setCourses(courses.filter(course => course.id !== selectedCourse))
-        setDeleteModal(!deleteModal)
-        setShowToast(!showToast)
-      } else {
-        alert("Failed to delete course");
-      }
+      setMessage(data.message)
+      setCourses(courses.filter(course => course.id !== selectedCourse))
+      setDeleteModal(!deleteModal)
+      setShowToast(!showToast)
     } catch (error) {
       console.log("Error in deleting course", error)
     }
@@ -107,60 +94,39 @@ function TeacherCourses() {
   const sendNotification = async (e) => {
     e.preventDefault()
     try {
-      const response = await apiClient.post(`/course/send-notification`, {
-        message: notifationMessage,
-        courseId: selectedCourse,
-        userId: user.id
-      });
-
-      const data = response.data;
+      const data = await createNotification(notifationMessage, selectedCourse, user.id)
       setMessage(data.message)
 
-      if (response.status === 200) {
+      socket.emit('notificationAdded', {
+        courseId: selectedCourse,
+        teacherId: user.id,
+      });
 
-        socket.emit('notificationAdded', {
-          courseId: selectedCourse,
-          teacherId: user.id,
-        });
-
-        setSelectedCourse("")
-        setTimeout(() => {
-          setNotificationMessage("")
-          setMessage("")
-          closeModal()
-        }, 1000)
-      } else {
-        setMessage(data.message || 'notification send failed.');
-      }
+      setSelectedCourse("")
+      setTimeout(() => {
+        setNotificationMessage("")
+        setMessage("")
+        closeModal()
+      }, 1000)
     } catch (error) {
-      setMessage('Server error. Please try again later.');
+      console.log(data.message)
+      setMessage(data.message);
     }
   }
 
   const sendEmail = async (e) => {
     e.preventDefault()
     try {
-
-      const response = await apiClient.post(`/course/send-email-notification`, {
-        message: emailMessage,
-        courseId: selectedCourse,
-      });
-
-      const data = response.data;
+      const data = await createEmailNotification(emailMessage, selectedCourse)
       setMessage(data.message)
-      if (response.status === 200) {
-
-        setSelectedCourse("")
-        setTimeout(() => {
-          setEmailMessage("")
-          setMessage("")
-          closeEmailModal()
-        }, 1000)
-      } else {
-        setMessage(data.message || 'notification send failed.');
-      }
+      setSelectedCourse("")
+      setTimeout(() => {
+        setEmailMessage("")
+        setMessage("")
+        closeEmailModal()
+      }, 1000)
     } catch (error) {
-      setMessage('Server error. Please try again later.');
+      setMessage(data.message);
     }
   }
 
@@ -191,7 +157,7 @@ function TeacherCourses() {
 
   const handleViewStudents = async (id) => {
     try {
-      
+
       const response = await apiClient.get(`/course/get-course-students/${id}`);
 
       const data = response.data;
@@ -267,18 +233,18 @@ function TeacherCourses() {
             ) : courses.length === 0 ? (
               <p className='mt-3 ms-3'>No courses available. Add a course to get started.</p>
             ) : (
-              <Table 
-              columns={columns}
-              data={currentCourses}
-              loading={loading}
-              error={error}
-              emptyMessage="No courses available. Add a course to get started."
-              rowActions={renderRowActions}
-              currentPage={currentPage}
-              itemsPerPage={coursePerPage}
-              onPageChange={paginate}
-              totalItems={courses.length}
-            />
+              <Table
+                columns={columns}
+                data={currentCourses}
+                loading={loading}
+                error={error}
+                emptyMessage="No courses available. Add a course to get started."
+                rowActions={renderRowActions}
+                currentPage={currentPage}
+                itemsPerPage={coursePerPage}
+                onPageChange={paginate}
+                totalItems={courses.length}
+              />
             )}
             <nav>
               <ul className="pagination">

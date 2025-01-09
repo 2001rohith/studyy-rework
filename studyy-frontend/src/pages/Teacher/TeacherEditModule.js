@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import TeacherSidebar from '../components/TeacherSidebar'
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useApiClient } from "../../utils/apiClient"
+import { useCourseService } from '../../utils/courseService';
 import API_URL from '../../axiourl';
 import { useUser } from "../../UserContext"
 import { Upload } from 'lucide-react';
@@ -9,8 +9,7 @@ import { Upload } from 'lucide-react';
 
 
 const TeacherEditModule = () => {
-    const apiClient = useApiClient()
-
+    const { fetchModuleData, updateModule } = useCourseService()
     const { user, token } = useUser();
     const navigate = useNavigate()
     const location = useLocation()
@@ -53,66 +52,56 @@ const TeacherEditModule = () => {
     useEffect(() => {
         const getModule = async () => {
             try {
-                const response = await apiClient.get(`/course/get-module-data/${moduleId}`)
-                const data = response.data
-                console.log("data:", data)
-                if (response.status === 200) {
-                    console.log("module data:", data.module)
-                    setModule(data.module)
-                    setTitle(data.module.title)
-                    setDescription(data.module.description)
+                const data = await fetchModuleData(moduleId);
 
-                }
+                console.log("Module data:", data);
+                setModule(data.module);
+                setTitle(data.module.title);
+                setDescription(data.module.description);
             } catch (error) {
-                console.log("Error fetching module:", error);
+                console.error("Error fetching module:", error);
             }
-        }
+        };
+
         getModule()
     }, [])
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         const formData = new FormData();
         formData.append('title', title);
         formData.append('description', description);
         if (pdfFile) formData.append('pdf', pdfFile);
-        if (videoFile) formData.append("video", videoFile);
+        if (videoFile) formData.append('video', videoFile);
 
         try {
             setLoading(true);
-            const response = await apiClient.put(
-                `/course/teacher-edit-module/${moduleId}`, 
-                formData,
-                {
-                    onUploadProgress: (progressEvent) => {
-                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                        setUploadProgress(prev => ({
-                            pdf: pdfFile ? percentCompleted : 0,
-                            video: videoFile ? percentCompleted : 0
-                        }));
-                    }
-                }
-            );
 
-            const data = response.data;
-            if (response.status === 200) {
-                setMessage("Module updated successfully");
-                setShowToast(true);
-                setTimeout(() => {
-                    navigate("/teacher-edit-course", { state: { course } });
-                }, 2000);
-            } else {
-                setMessage(data.message || "Failed to update module");
-                setShowToast(true);
-            }
+            const onUploadProgress = (progressEvent) => {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                setUploadProgress((prev) => ({
+                    pdf: pdfFile ? percentCompleted : prev.pdf,
+                    video: videoFile ? percentCompleted : prev.video,
+                }));
+            };
+
+            const data = await updateModule(moduleId, formData, onUploadProgress);
+
+            setMessage("Module updated successfully");
+            setShowToast(true);
+            setTimeout(() => {
+                navigate("/teacher-edit-course", { state: { course } });
+            }, 2000);
         } catch (error) {
-            console.log("Error uploading module", error);
-            setMessage("Error updating module. Please try again.");
+            console.error("Error updating module:", error);
+            setMessage(error.message || "Error updating module. Please try again.");
             setShowToast(true);
         } finally {
             setLoading(false);
         }
     };
+
 
     const handleViewPDF = () => {
         if (!modulee) return
@@ -149,41 +138,41 @@ const TeacherEditModule = () => {
                             <h5 className='mb-5'>Edit Module</h5>
                             <form onSubmit={handleSubmit}>
                                 <label>Title:</label>
-                                <input 
-                                    className='form-control' 
-                                    type="text" 
-                                    placeholder="Title" 
-                                    value={title} 
-                                    onChange={(e) => setTitle(e.target.value)} 
-                                    required 
+                                <input
+                                    className='form-control'
+                                    type="text"
+                                    placeholder="Title"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    required
                                     disabled={loading}
                                 />
                                 <label>Description:</label>
-                                <textarea 
-                                    className='form-control' 
-                                    placeholder="Description" 
-                                    value={description} 
-                                    onChange={(e) => setDescription(e.target.value)} 
-                                    required 
+                                <textarea
+                                    className='form-control'
+                                    placeholder="Description"
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    required
                                     disabled={loading}
                                 />
-                                <button 
+                                <button
                                     type="button"
-                                    className='btn table-button me-2' 
+                                    className='btn table-button me-2'
                                     onClick={handleViewPDF}
                                     disabled={loading}
                                 >
                                     Pdf
                                 </button>
-                                <button 
+                                <button
                                     type="button"
-                                    className='btn table-button' 
+                                    className='btn table-button'
                                     onClick={handleViewVideo}
                                     disabled={loading}
                                 >
                                     Video
                                 </button>
-                                
+
                                 {/* PDF Upload Section */}
                                 <div className="mb-3 mt-2">
                                     <label>Upload PDF:</label>
@@ -197,12 +186,12 @@ const TeacherEditModule = () => {
                                         />
                                         {loading && fileNames.pdf && (
                                             <div className="progress mt-2">
-                                                <div 
-                                                    className="progress-bar progress-bar-striped progress-bar-animated" 
-                                                    role="progressbar" 
+                                                <div
+                                                    className="progress-bar progress-bar-striped progress-bar-animated"
+                                                    role="progressbar"
                                                     style={{ width: `${uploadProgress.pdf}%` }}
-                                                    aria-valuenow={uploadProgress.pdf} 
-                                                    aria-valuemin="0" 
+                                                    aria-valuenow={uploadProgress.pdf}
+                                                    aria-valuemin="0"
                                                     aria-valuemax="100"
                                                 >
                                                     {uploadProgress.pdf}%
@@ -225,12 +214,12 @@ const TeacherEditModule = () => {
                                         />
                                         {loading && fileNames.video && (
                                             <div className="progress mt-2">
-                                                <div 
-                                                    className="progress-bar progress-bar-striped progress-bar-animated" 
-                                                    role="progressbar" 
+                                                <div
+                                                    className="progress-bar progress-bar-striped progress-bar-animated"
+                                                    role="progressbar"
                                                     style={{ width: `${uploadProgress.video}%` }}
-                                                    aria-valuenow={uploadProgress.video} 
-                                                    aria-valuemin="0" 
+                                                    aria-valuenow={uploadProgress.video}
+                                                    aria-valuemin="0"
                                                     aria-valuemax="100"
                                                 >
                                                     {uploadProgress.video}%
@@ -240,8 +229,8 @@ const TeacherEditModule = () => {
                                     </div>
                                 </div>
 
-                                <button 
-                                    className='btn btn-secondary button mb-3' 
+                                <button
+                                    className='btn btn-secondary button mb-3'
                                     type="submit"
                                     disabled={loading}
                                 >

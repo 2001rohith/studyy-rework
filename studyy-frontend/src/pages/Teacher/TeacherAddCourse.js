@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import TeacherSidebar from '../components/TeacherSidebar';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useApiClient } from "../../utils/apiClient"
-import API_URL from '../../axiourl';
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext"
 
 
 
 const TeacherAddCourse = () => {
-    const apiClient = useApiClient()
+    const { createCourse, addModule } = useCourseService()
     const location = useLocation();
     const navigate = useNavigate();
     const { user, token } = useUser();
@@ -28,67 +27,58 @@ const TeacherAddCourse = () => {
     const [moduleVideoFile, setModuleVideoFile] = useState(null)
 
 
-    
-    // Handle course creation
+
     const handleCourseSubmit = async (e) => {
         e.preventDefault();
         const trimmedTitle = title.trim();
         const trimmedDescription = description.trim();
-
+    
         if (!trimmedTitle || !trimmedDescription) {
             setMessage("Please provide valid course details.");
             return;
         }
-
+    
+        const courseData = {
+            title: trimmedTitle,
+            description: trimmedDescription,
+            userId,
+        };
+    
         try {
-
-            const response = await apiClient.post(`/course/create`, { title: trimmedTitle, description: trimmedDescription, userId });
-
-            const data = response.data;
-            if (response.status === 200) {
-                setMessage("Course created successfully.");
-                setCourseId(data.course._id)
-            } 
+            const data = await createCourse(courseData);
+            setMessage("Course created successfully.");
+            setCourseId(data.course._id); // Save course ID for module submission
         } catch (error) {
-            if (error.response) {
-                setMessage(error.response.data.message || "An error occurred");
-            }
-            console.error('Error creating course:', error);
+            console.error("Error creating course:", error);
+            setMessage(error.message);
         }
     };
+    
 
     const handleModuleSubmit = async (e) => {
         e.preventDefault();
-
+    
         if (!moduleFile || !courseId) {
             setMessage("Please create a course first and upload a PDF file.");
             return;
         }
-
+    
         const formData = new FormData();
-        formData.append('title', moduleTitle);
-        formData.append('description', moduleDescription);
-        formData.append('courseId', courseId);
-        formData.append('pdf', moduleFile);
-        formData.append("video", moduleVideoFile)
-
-
+        formData.append("title", moduleTitle);
+        formData.append("description", moduleDescription);
+        formData.append("courseId", courseId);
+        formData.append("pdf", moduleFile);
+        formData.append("video", moduleVideoFile);
+    
         try {
-
-            const response = await apiClient.post(`/course/teacher-add-module`, formData);
-
-            const data = response.data;
-            if (response.status === 200) {
-                // alert("Module created!")
-                setMessage("Module added successfully.");
-            } else {
-                setMessage(data.message);
-            }
+            const data = await addModule(formData);
+            setMessage("Module added successfully.");
         } catch (error) {
-            console.error('Error adding module:', error);
-            setMessage("Error occurred while adding the module.");
+            console.error("Error adding module:", error);
+            setMessage(error.message);
         }
     };
+    
 
     return (
         <>

@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StudentSidebar from '../components/StudentSidebar';
-import { useApiClient } from "../../utils/apiClient";
+import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext";
 
 function StudentEnrolledCourses() {
-  const apiClient = useApiClient();
+  const { fetchEnrolledCourses } = useCourseService()
   const navigate = useNavigate();
   const { user, token } = useUser();
   const [loading, setLoading] = useState(true);
   const [newCourses, setNewCourses] = useState([]);
 
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6; // Number of courses per page
+  const itemsPerPage = 6; 
 
-  // Calculate pagination details
   const totalPages = Math.max(1, Math.ceil(newCourses.length / itemsPerPage));
   const currentCourses = newCourses.slice(
     (currentPage - 1) * itemsPerPage,
@@ -23,23 +21,23 @@ function StudentEnrolledCourses() {
   );
 
   useEffect(() => {
-    const fetchEnrolledCourses = async () => {
-      if (!user) {
-        navigate('/');
-        return;
-      }
-      try {
-        const response = await apiClient.get(`/course/enrolled-courses/${user.id}`);
-        const data = response.data;
-        setNewCourses(data.courses);
-        setLoading(false);
-      } catch (error) {
-        console.log('Error in fetching courses:', error);
-        setLoading(false);
-      }
+    const getEnrolledCourses = async () => {
+        try {
+            if (!user || !user.id) {
+                navigate('/');
+                return;
+            }
+            const data = await fetchEnrolledCourses(user.id);
+            setNewCourses(data.courses);
+        } catch (error) {
+            console.error('Error in fetching courses:', error);
+        } finally {
+            setLoading(false);
+        }
     };
-    fetchEnrolledCourses();
-  }, [user.id]);
+    getEnrolledCourses();
+}, [user]);
+
 
   const viewCourse = (id) => {
     navigate('/student-view-course', { state: { courseId: id } });
