@@ -153,10 +153,10 @@ export const useCourseService = () => {
     const fetchCourses = async (userId, { page = 1, limit = 4, search = "", modulesFilter = "" }) => {
         try {
             const queryParams = new URLSearchParams({
-                page,
-                limit,
-                search,
-                modulesFilter,
+                page: page.toString(),
+                limit: limit.toString(),
+                search: search,
+                modulesFilter: modulesFilter,
             });
     
             const response = await apiClient.get(`/course/home-get-courses/${userId}?${queryParams.toString()}`);

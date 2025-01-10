@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StudentSidebar from '../components/StudentSidebar';
 import { useCourseService } from '../../utils/courseService';
@@ -15,7 +15,39 @@ function StudentAllCourses() {
     const [modulesFilter, setModulesFilter] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const itemsPerPage = 4; 
+    const itemsPerPage = 4;
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    const debouncedSearch = useCallback(
+        debounce((searchTerm) => {
+            setCurrentPage(1);
+            setSearch(searchTerm);
+        }, 5000),
+        []
+    )
+
+    const handleSearchChange = (e) => {
+        const searchTerm = e.target.value.trim();
+        setSearch(e.target.value)
+
+        if (searchTerm !== '') {
+            debouncedSearch(searchTerm);
+        } else {
+            setSearch('');
+            setCurrentPage(1);
+        }
+    };
 
     useEffect(() => {
         const getCourses = async () => {
@@ -29,11 +61,13 @@ function StudentAllCourses() {
                 const response = await fetchCourses(user.id, {
                     page: currentPage,
                     limit: itemsPerPage,
-                    search: search,
-                    modulesFilter: modulesFilter,
+                    search: search || '',
+                    modulesFilter: modulesFilter || '',
                 });
+                console.log("response:", response)
+
                 setCourses(response.courses);
-                setTotalPages(response.totalPages); 
+                setTotalPages(Math.max(response.totalPages || 1, 1));
             } catch (error) {
                 console.error("Error in fetching courses:", error.message);
                 setError(error.message);
@@ -41,7 +75,6 @@ function StudentAllCourses() {
                 setLoading(false);
             }
         };
-
         getCourses();
     }, [user, navigate, currentPage, search, modulesFilter]);
 
@@ -51,10 +84,17 @@ function StudentAllCourses() {
 
     const handlePageChange = (page) => {
         setCurrentPage(page);
+        window.scrollTo(0, 0);
     };
 
     const handleClearSearch = () => {
         setSearch('');
+        setCurrentPage(1);
+    };
+
+    const handleModuleFilter = (filter) => {
+        setModulesFilter(filter);
+        setCurrentPage(1);
     };
 
     if (loading) {
@@ -88,7 +128,7 @@ function StudentAllCourses() {
                             type="text"
                             placeholder="Search course..."
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={handleSearchChange}
                         />
                         <button
                             className="btn search-bar-button"
@@ -112,7 +152,7 @@ function StudentAllCourses() {
                                     <a
                                         className="dropdown-item"
                                         href="#"
-                                        onClick={() => setModulesFilter('')}
+                                        onClick={() => handleModuleFilter('')}
                                     >
                                         Default
                                     </a>
@@ -121,7 +161,7 @@ function StudentAllCourses() {
                                     <a
                                         className="dropdown-item"
                                         href="#"
-                                        onClick={() => setModulesFilter('Less')}
+                                        onClick={() => handleModuleFilter('Less')}
                                     >
                                         1-2
                                     </a>
@@ -130,7 +170,7 @@ function StudentAllCourses() {
                                     <a
                                         className="dropdown-item"
                                         href="#"
-                                        onClick={() => setModulesFilter('Medium')}
+                                        onClick={() => handleModuleFilter('Medium')}
                                     >
                                         3-4
                                     </a>
@@ -139,7 +179,7 @@ function StudentAllCourses() {
                                     <a
                                         className="dropdown-item"
                                         href="#"
-                                        onClick={() => setModulesFilter('More')}
+                                        onClick={() => handleModuleFilter('More')}
                                     >
                                         4+
                                     </a>
@@ -184,17 +224,17 @@ function StudentAllCourses() {
                             )}
                         </div>
                     </div>
-                    <div className="pagination-controls text-center mt-3">
-                        {[...Array(totalPages).keys()].map((num) => (
-                            <button
-                                key={num + 1}
-                                className={`btn ${currentPage === num + 1 ? 'btn-primary' : 'btn-outline-primary'} mx-1`}
-                                onClick={() => handlePageChange(num + 1)}
-                            >
-                                {num + 1}
-                            </button>
-                        ))}
-                    </div>
+                    <div className="pagination-controls text-center mt-4 mb-4">
+                            {[...Array(totalPages)].map((_, index) => (
+                                <button
+                                    key={index + 1}
+                                    className={`btn ${currentPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'} mx-1`}
+                                    onClick={() => handlePageChange(index + 1)}
+                                >
+                                    {index + 1}
+                                </button>
+                            ))}
+                        </div>
                 </div>
             </div>
         </div>

@@ -234,10 +234,13 @@ const courseService = {
     },
 
     async getHomeCourses(userId, { search, modulesFilter, page, limit }) {
-        const coursesData = await courseRepository.findCoursesNotEnrolledByUser(userId, { search, modulesFilter, page, limit });
-        if (coursesData.courses.length === 0) {
-            throw new Error(constants.COURSES_NOT_FOUND);
-        }
+        const coursesData = await courseRepository.findCoursesNotEnrolledByUser(userId, { 
+            search, 
+            modulesFilter, 
+            page, 
+            limit 
+        });
+        
         return coursesData;
     }
     

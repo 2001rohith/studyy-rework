@@ -118,39 +118,75 @@ const courseRepository = {
     },
 
     async findCoursesNotEnrolledByUser(userId, { search, modulesFilter, page, limit }) {
-        const user = await User.findById(userId).populate('enrolledCourses', '_id');
-        if (!user) {
-            throw new Error(constants.USER_NOT_FOUND);
-        }
-    
-        const enrolledCourseIds = user.enrolledCourses.map(course => course._id);
-        const query = { _id: { $nin: enrolledCourseIds } };
-    
-        if (modulesFilter) {
-            if (modulesFilter === 'Less') {
-                query['modules'] = { $size: { $gte: 1, $lte: 2 } };
-            } else if (modulesFilter === 'Medium') {
-                query['modules'] = { $size: { $gte: 3, $lte: 4 } };
-            } else if (modulesFilter === 'More') {
-                query['modules'] = { $size: { $gt: 4 } };
+        try {
+            const pageNum = parseInt(page);
+            const limitNum = parseInt(limit);
+            
+            const user = await User.findById(userId).populate('enrolledCourses', '_id');
+            if (!user) {
+                throw new Error(constants.USER_NOT_FOUND);
             }
+        
+            const enrolledCourseIds = user.enrolledCourses.map(course => course._id);
+            let query = { _id: { $nin: enrolledCourseIds } };
+        
+            if (modulesFilter) {
+                if (modulesFilter === 'Less') {
+                    query.$expr = { 
+                        $and: [
+                            { $gte: [{ $size: "$modules" }, 1] },
+                            { $lte: [{ $size: "$modules" }, 2] }
+                        ]
+                    };
+                } else if (modulesFilter === 'Medium') {
+                    query.$expr = { 
+                        $and: [
+                            { $gte: [{ $size: "$modules" }, 3] },
+                            { $lte: [{ $size: "$modules" }, 4] }
+                        ]
+                    };
+                } else if (modulesFilter === 'More') {
+                    query.$expr = { 
+                        $gt: [{ $size: "$modules" }, 4]
+                    };
+                }
+            }
+        
+            if (search) {
+                const searchCriteria = {
+                    $or: [
+                        { title: { $regex: search, $options: 'i' } },
+                        { courseId: { $regex: search, $options: 'i' } },
+                    ]
+                };
+                
+                query = {
+                    $and: [
+                        query,
+                        searchCriteria
+                    ]
+                };
+            }
+    
+            const debugQuery = JSON.parse(JSON.stringify(query));
+            console.log('MongoDB Query:', debugQuery);
+    
+            const [courses, totalCourses] = await Promise.all([
+                Course.find(query)
+                    .sort({ createdAt: -1 })
+                    .skip((pageNum - 1) * limitNum)
+                    .limit(limitNum),
+                Course.countDocuments(query)
+            ]);
+    
+            return {
+                courses,
+                totalPages: Math.ceil(totalCourses / limitNum) || 1,
+            };
+        } catch (error) {
+            console.error('Repository Error:', error);
+            throw new Error(`Error finding courses: ${error.message}`);
         }
-    
-        if (search) {
-            query['$or'] = [
-                { title: { $regex: search, $options: 'i' } },
-                { courseId: { $regex: search, $options: 'i' } },
-            ];
-        }
-    
-        const skip = (page - 1) * limit;
-        const courses = await Course.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
-        const totalCourses = await Course.countDocuments(query);
-    
-        return {
-            courses,
-            totalPages: Math.ceil(totalCourses / limit),
-        };
     }
     
 

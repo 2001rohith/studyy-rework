@@ -830,11 +830,22 @@ exports.getModuleData = async (req, res) => {
 
 exports.homeCourses = async (req, res) => {
     const userId = req.params.id;
-    const { search, modulesFilter, page = 1, limit = 4 } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 4;
+    const { search, modulesFilter } = req.query;
 
     try {
-        const { courses, totalPages } = await courseService.getHomeCourses(userId, { search, modulesFilter, page, limit });
-        res.status(HttpStatus.OK).json({ courses, totalPages, currentPage: Number(page) });
+        const { courses, totalPages } = await courseService.getHomeCourses(userId, { 
+            search, 
+            modulesFilter, 
+            page, 
+            limit 
+        });
+        res.status(HttpStatus.OK).json({ 
+            courses, 
+            totalPages,
+            currentPage: page
+        });
     } catch (error) {
         console.error('Get courses error:', error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
