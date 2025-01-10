@@ -1,117 +1,101 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StudentSidebar from '../components/StudentSidebar';
 import { useCourseService } from '../../utils/courseService';
 import { useUser } from "../../UserContext";
+import debounce from 'lodash/debounce';
 
 function StudentAllCourses() {
-    const { fetchCourses } = useCourseService();
+    const { fetchCourses } = useCourseService()
     const navigate = useNavigate();
-    const { user, token } = useUser();
+    const { user } = useUser();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [courses, setCourses] = useState([]);
     const [search, setSearch] = useState("");
-    const [modulesFilter, setModulesFilter] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
+    const [modulesFilter, setModulesFilter] = useState("");
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalCourses, setTotalCourses] = useState(0);
     const itemsPerPage = 4;
 
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+    const debouncedSearch = debounce((searchTerm) => {
+        setSearch(searchTerm);
+        setCurrentPage(1);
+    }, 500);
 
-    const debouncedSearch = useCallback(
-        debounce((searchTerm) => {
-            setCurrentPage(1);
-            setSearch(searchTerm);
-        }, 5000),
-        []
-    )
+    useEffect(() => {
+        getCourses();
+    }, [currentPage, search, modulesFilter]);
 
-    const handleSearchChange = (e) => {
-        const searchTerm = e.target.value.trim();
-        setSearch(e.target.value)
+    const getCourses = async () => {
+        try {
+            setLoading(true);
+            const response = await fetchCourses(user.id, {
+                page: currentPage,
+                limit: itemsPerPage,
+                search: search || '',
+                modulesFilter: modulesFilter || '',
+            });
 
-        if (searchTerm !== '') {
-            debouncedSearch(searchTerm);
-        } else {
-            setSearch('');
-            setCurrentPage(1);
+            const { courses, totalPages, totalCourses } = response.data;
+            setCourses(courses || []);
+            setTotalPages(totalPages);
+            setTotalCourses(totalCourses);
+        } catch (error) {
+            console.error("Error in fetching courses:", error);
+            setError(error.response?.data?.message || 'Failed to fetch courses');
+        } finally {
+            setLoading(false);
         }
     };
 
-    useEffect(() => {
-        const getCourses = async () => {
-            try {
-                if (!user || !user.id) {
-                    setError('User information not found');
-                    navigate("/", { replace: true });
-                    return;
-                }
-                setLoading(true);
-                const response = await fetchCourses(user.id, {
-                    page: currentPage,
-                    limit: itemsPerPage,
-                    search: search || '',
-                    modulesFilter: modulesFilter || '',
-                });
-                console.log("response:", response)
 
-                setCourses(response.courses);
-                setTotalPages(Math.max(response.totalPages || 1, 1));
-            } catch (error) {
-                console.error("Error in fetching courses:", error.message);
-                setError(error.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-        getCourses();
-    }, [user, navigate, currentPage, search, modulesFilter]);
-
-    const viewCourse = (id) => {
-        navigate("/student-check-course", { state: { courseId: id } });
+    const handleSearchChange = (e) => {
+        debouncedSearch(e.target.value);
     };
 
-    const handlePageChange = (page) => {
-        setCurrentPage(page);
-        window.scrollTo(0, 0);
-    };
-
-    const handleClearSearch = () => {
+    const clearSearch = () => {
         setSearch('');
         setCurrentPage(1);
     };
 
-    const handleModuleFilter = (filter) => {
-        setModulesFilter(filter);
+    const handleModulesFilter = (value) => {
+        setModulesFilter(value);
         setCurrentPage(1);
     };
 
-    if (loading) {
-        return (
-            <div className="spinner-border text-primary spinner2" role="status">
-                <span className="visually-hidden">Loading...</span>
-            </div>
-        );
-    }
+    const renderPagination = () => {
+        if (totalPages <= 1) return null;
 
-    if (error) {
         return (
-            <div className="alert alert-danger" role="alert">
-                {error}
+            <div className="pagination-controls text-center mt-4">
+                <button
+                    className="btn btn-outline-primary mx-1"
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                >
+                    Previous
+                </button>
+                <span className="mx-2">Page {currentPage} of {totalPages}</span>
+                <button
+                    className="btn btn-outline-primary mx-1"
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                >
+                    Next
+                </button>
             </div>
         );
-    }
+    };
+
+    // if (loading) {
+    //   return (
+    //     <div className="spinner-border text-primary spinner2" role="status">
+    //       <span className="visually-hidden">Loading...</span>
+    //     </div>
+    //   );
+    // }
 
     return (
         <div className="row">
@@ -127,12 +111,12 @@ function StudentAllCourses() {
                         <input
                             type="text"
                             placeholder="Search course..."
-                            value={search}
+                            defaultValue={search}
                             onChange={handleSearchChange}
                         />
                         <button
                             className="btn search-bar-button"
-                            onClick={handleClearSearch}
+                            onClick={clearSearch}
                             disabled={!search}
                         >
                             Clear
@@ -145,98 +129,89 @@ function StudentAllCourses() {
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false"
                             >
-                                {modulesFilter ? modulesFilter : "Modules"}
+                                {modulesFilter || "Modules"}
                             </button>
                             <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                 <li>
-                                    <a
-                                        className="dropdown-item"
-                                        href="#"
-                                        onClick={() => handleModuleFilter('')}
-                                    >
+                                    <button className="dropdown-item" onClick={() => handleModulesFilter('')}>
                                         Default
-                                    </a>
+                                    </button>
                                 </li>
                                 <li>
-                                    <a
-                                        className="dropdown-item"
-                                        href="#"
-                                        onClick={() => handleModuleFilter('Less')}
-                                    >
+                                    <button className="dropdown-item" onClick={() => handleModulesFilter('Less')}>
                                         1-2
-                                    </a>
+                                    </button>
                                 </li>
                                 <li>
-                                    <a
-                                        className="dropdown-item"
-                                        href="#"
-                                        onClick={() => handleModuleFilter('Medium')}
-                                    >
+                                    <button className="dropdown-item" onClick={() => handleModulesFilter('Medium')}>
                                         3-4
-                                    </a>
+                                    </button>
                                 </li>
                                 <li>
-                                    <a
-                                        className="dropdown-item"
-                                        href="#"
-                                        onClick={() => handleModuleFilter('More')}
-                                    >
+                                    <button className="dropdown-item" onClick={() => handleModulesFilter('More')}>
                                         4+
-                                    </a>
+                                    </button>
                                 </li>
                             </ul>
                         </div>
                     </div>
+
+                    {error && (
+                        <div className="alert alert-danger mt-3" role="alert">
+                            {error}
+                        </div>
+                    )}
+
                     <div className="row mt-3 text-dark">
-                        <h5 className="mb-3">Our courses!</h5>
+                        <h5 className="mb-3">Our Courses</h5>
                         <div className="scroll-container">
                             {courses.length === 0 ? (
                                 <div className="alert alert-info" role="alert">
-                                    No courses match your search criteria.
+                                    No courses match.
+                                </div>
+                            ) : loading ? (
+                                <div className="text-center my-3">
+                                    <div className="spinner-border text-primary spinner3" role="status">
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div>
                                 </div>
                             ) : (
-                                courses.map((course) => (
-                                    <div
-                                        className="card course-card mx-2"
-                                        style={{ width: '20rem', height: "25rem" }}
-                                        key={course._id}
-                                    >
-                                        <img
-                                            src="/course-card1.jpg"
-                                            className="card-img-top"
-                                            alt="Course thumbnail"
-                                            style={{ height: '200px', objectFit: 'cover', borderRadius: "15px" }}
-                                        />
-                                        <div className="card-body">
-                                            <h5 className="card-title">{course.title}</h5>
-                                            <small className="card-text mb-1">{course.description}</small>
-                                            <div className="text-center">
-                                                <button
-                                                    className="btn button mt-5"
-                                                    onClick={() => viewCourse(course._id)}
-                                                >
-                                                    More
-                                                </button>
+                                <div className="row row-cols-1 row-cols-md-2 g-4">
+                                    {courses.map((course) => (
+                                        <div className="col" key={course._id}>
+                                            <div className="card course-card  mb-5">
+                                                <img
+                                                    src="/course-card1.jpg"
+                                                    className="card-img-top"
+                                                    alt="Course thumbnail"
+                                                    style={{ objectFit: 'cover', borderRadius: '15px' }}
+                                                />
+                                                <div className="card-body d-flex flex-column">
+                                                    <h5 className="card-title">{course.title}</h5>
+                                                    <p className="card-text mb-1">{course.description}</p>
+                                                    <div className="text-center mt-auto">
+                                                        <button
+                                                            className="btn button"
+                                                            onClick={() =>
+                                                                navigate("/student-check-course", {
+                                                                    state: { courseId: course._id },
+                                                                })
+                                                            }
+                                                        >
+                                                            More
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))
+                                    ))}
+                                </div>
                             )}
                         </div>
-                    </div>
-                    <div className="pagination-controls text-center mt-4 mb-4">
-                            {[...Array(totalPages)].map((_, index) => (
-                                <button
-                                    key={index + 1}
-                                    className={`btn ${currentPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'} mx-1`}
-                                    onClick={() => handlePageChange(index + 1)}
-                                >
-                                    {index + 1}
-                                </button>
-                            ))}
-                        </div>
+                    </div>;
                 </div>
             </div>
+            {renderPagination()}
         </div>
     );
 }
