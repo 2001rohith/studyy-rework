@@ -16,7 +16,7 @@ exports.getStudents = async (req, res) => {
                 message: error.message
             });
         }
-        console.error("Error get students:", error);
+        console.error(constants.GET_STUDENTS_ERROR, error);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -34,7 +34,7 @@ exports.getCourses = async (req, res) => {
                 message: error.message
             });
         }
-        console.error("Get courses error:", error.message);
+        console.error(constants.COURSES_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 }
@@ -59,7 +59,6 @@ exports.DeleteCourse = async (req, res) => {
     const courseId = req.params.id
     try {
         await courseService.deleteCourse(courseId)
-        console.log("course deleted")
         res.status(HttpStatus.OK).json({ message: "course deleted successfully" })
     } catch (error) {
         if (error.message === constants.NO_COURSE_FOUND) {
@@ -67,7 +66,7 @@ exports.DeleteCourse = async (req, res) => {
                 message: error.message
             });
         }
-        console.error("delete course error:", error.message);
+        console.error(constants.COURSES_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 }
@@ -87,7 +86,7 @@ exports.getCourse = async (req, res) => {
         if (error.message === constants.NO_COURSE_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
         }
-        console.error(`Get course error:`, error.message);
+        console.error(constants.COURSES_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 };
@@ -103,7 +102,7 @@ exports.EditCourse = async (req, res) => {
         if (error.message === constants.NO_COURSE_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
         }
-        console.error(`Update course error`, error.message);
+        console.error(constants.COURSES_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 };
@@ -126,7 +125,7 @@ exports.createModule = async (req, res) => {
         if (error.message === constants.NO_COURSE_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
         }
-        console.error("Error creating module:", error.message);
+        console.error(constants.MODULE_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 };
@@ -137,13 +136,12 @@ exports.DeleteModule = async (req, res) => {
 
     try {
         await moduleService.deleteModule(moduleId);
-        console.log(`Deleted module`);
         res.status(HttpStatus.OK).json({ message: "Module deleted successfully" });
     } catch (error) {
         if (error.message === constants.MODULE_NOT_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
         }
-        console.error(`Delete module error (moduleId: ${moduleId}):`, error.message);
+        console.error(constants.MODULE_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 };
@@ -165,7 +163,7 @@ exports.EditModule = async (req, res) => {
         if (error.message === constants.MODULE_NOT_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
         }
-        console.error(`Update module error:`, error.message);
+        console.error(constants.MODULE_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 };
@@ -176,7 +174,7 @@ exports.AdmingetCourses = async (req, res) => {
         const courses = await courseService.getCoursesForAdmin();
         res.status(HttpStatus.OK).json({ courses, message: "Courses for admin" });
     } catch (error) {
-        console.error("Admin get courses error:", error.message);
+        console.error(constants.COURSES_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 };
@@ -191,7 +189,7 @@ exports.AdmingetCourse = async (req, res) => {
         if (error.message === constants.NO_COURSE_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
         }
-        console.error("Admin get course error:", error.message);
+        console.error(constants.COURSES_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 };
@@ -206,7 +204,7 @@ exports.GetAssignments = async (req, res) => {
         if (error.message === constants.ASSIGNMENT_NOT_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
         }
-        console.error("Get assignments error:", error.message);
+        console.error(constants.ASSIGNMENT_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 };
@@ -224,7 +222,7 @@ exports.CreateAssignment = async (req, res) => {
         if (error.message === constants.NO_COURSE_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
         }
-        console.error("Error creating assignment:", error.message);
+        console.error(constants.ASSIGNMENT_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 };
@@ -243,7 +241,7 @@ exports.EditAssignment = async (req, res) => {
         if (error.message === constants.ASSIGNMENT_NOT_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
         }
-        console.error("Update assignment error:", error.message);
+        console.error(constants.ASSIGNMENT_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 };
@@ -253,13 +251,12 @@ exports.DeleteAssignment = async (req, res) => {
 
     try {
         await assignmentService.deleteAssignment(assignmentId);
-        console.log("Assignment deleted successfully");
         res.status(HttpStatus.OK).json({ message: "Assignment deleted successfully" });
     } catch (error) {
         if (error.message === constants.ASSIGNMENT_NOT_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
         }
-        console.error("Delete assignment error:", error.message);
+        console.error(constants.ASSIGNMENT_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 };
@@ -272,7 +269,7 @@ exports.addQuiz = async (req, res) => {
         console.log("Quiz created successfully");
         res.status(HttpStatus.OK).json({ message: "Quiz created successfully" });
     } catch (error) {
-        console.error("Error adding quiz:", error.message);
+        console.error(constants.QUIZ_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 };
@@ -289,7 +286,7 @@ exports.getQuizzes = async (req, res) => {
         if (error.message === constants.NO_QUIZ_FOR_COURSE) {
             return res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
         }
-        console.error("Error retrieving quizzes:", error.message);
+        console.error(constants.QUIZ_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 };
@@ -310,7 +307,7 @@ exports.DeleteQuiz = async (req, res) => {
                 message: error.message
             });
         }
-        console.error("Error deleting quiz:", error.message);
+        console.error(constants.QUIZ_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -331,7 +328,7 @@ exports.GetQuiz = async (req, res) => {
                 message: error.message
             });
         }
-        console.error("get quiz error:", error.message);
+        console.error(constants.QUIZ_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -355,7 +352,7 @@ exports.EditQuiz = async (req, res) => {
             quiz: updatedQuiz
         });
     } catch (error) {
-        console.error("Error updating quiz:", error.message);
+        console.error(constants.QUIZ_ERROR, error.message);
 
         if (error.message === constants.QUIZ_NOT_FOUND || error.message === constants.NO_COURSE_FOUND) {
             return res.status(HttpStatus.BAD_REQUEST).json({
@@ -379,7 +376,7 @@ exports.adminGetQuizzes = async (req, res) => {
             quizzes
         });
     } catch (error) {
-        console.error("Error admin get quizzes:", error.message);
+        console.error(constants.QUIZ_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -398,7 +395,7 @@ exports.adminDeleteQuiz = async (req, res) => {
                 message: error.message
             });
         }
-        console.error("Error deleting quiz:", error.message);
+        console.error(constants.QUIZ_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -415,7 +412,7 @@ exports.adminGetAssignments = async (req, res) => {
 
         res.status(HttpStatus.OK).json({ assignments });
     } catch (error) {
-        console.error("get assignments error:", error.message);
+        console.error(constants.ASSIGNMENT_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
     }
 }
@@ -432,7 +429,7 @@ exports.adminDeleteAssignment = async (req, res) => {
                 message: error.message
             });
         }
-        console.error("Error deleting assignment:", error.message);
+        console.error(constants.ASSIGNMENT_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -450,7 +447,7 @@ exports.studentEnrollment = async (req, res) => {
                 message: error.message
             });
         }
-        console.error("Student enrollment error:", error.message);
+        console.error(constants.COURSES_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -469,7 +466,7 @@ exports.studentGetAssignments = async (req, res) => {
                 message: error.message
             });
         }
-        console.error("Error fetching assignments:", error.message);
+        console.error(constants.ASSIGNMENT_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -490,7 +487,7 @@ exports.studentsubmitAssignment = async (req, res) => {
             });
         }
 
-        console.error("Error submitting assignment:", error.message);
+        console.error(constants.ASSIGNMENT_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -511,7 +508,7 @@ exports.studentGetQuizzes = async (req, res) => {
             });
         }
 
-        console.error("Error fetching quizzes:", error.message);
+        console.error(constants.QUIZ_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -532,7 +529,7 @@ exports.enrolledCourses = async (req, res) => {
             });
         }
 
-        console.error("Error fetching enrolled courses:", error.message);
+        console.error(constants.COURSES_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -552,7 +549,7 @@ exports.submitQuiz = async (req, res) => {
             });
         }
 
-        console.error("Error submitting quiz:", error.message);
+        console.error(constants.QUIZ_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -571,7 +568,7 @@ exports.getClasses = async (req, res) => {
                 message: error.message
             });
         }
-        console.error("Error fetching classes:", error.message);
+        console.error(constants.CLASS_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -591,7 +588,7 @@ exports.createClass = async (req, res) => {
             });
         }
 
-        console.error("Error creating class:", error.message);
+        console.error(constants.CLASS_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
@@ -610,7 +607,7 @@ exports.studentGetClasses = async (req, res) => {
                 message: error.message
             });
         }
-        console.error("Error fetching classes:", error.message);
+        console.error(constants.CLASS_ERROR, error.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });

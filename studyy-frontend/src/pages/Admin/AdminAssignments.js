@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar2 from '../components/Sidebar2';
-import { useApiClient } from "../../utils/apiClient"
+// import { useApiClient } from "../../utils/apiClient"
 import { useUser } from "../../UserContext"
 import { useCourseService } from '../../utils/courseService';
 
 
 function AdminAssignments() {
     const { fetchAssignments, adminDeleteAssignment } = useCourseService()
-    const apiClient = useApiClient()
+    // const apiClient = useApiClient()
     const navigate = useNavigate();
     const { user, token } = useUser();
     const [assignments, setAssignments] = useState([]);
@@ -18,7 +18,7 @@ function AdminAssignments() {
     const [currentPage, setCurrentPage] = useState(1)
     const [assignmentsPerPage] = useState(5);
     const [courseName, setCourseName] = useState('');
-    const [currentAssignments, setCurrentAssignments] = useState([]);
+    const [currentAssignments, setCurrentAssignments] = useState([])
 
     const getAssignments = async () => {
         try {

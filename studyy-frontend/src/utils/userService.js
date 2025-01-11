@@ -1,5 +1,6 @@
 import { useApiClient } from "./apiClient";
 import statusCode from "./statusCode";
+import constants from "./constants";
 
 export const useUserService = () => {
     const apiClient = useApiClient()
@@ -14,7 +15,7 @@ export const useUserService = () => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            throw new Error("Server error. Please try again later.");
+            throw new Error(constants.SERVER_ERROR);
         }
     }
 
@@ -28,7 +29,7 @@ export const useUserService = () => {
             }
         } catch (error) {
             console.error("Error deleting user:", error);
-            throw new Error("Server error. Please try again later.");
+            throw new Error(constants.SERVER_ERROR);
         }
     }
 
@@ -42,7 +43,7 @@ export const useUserService = () => {
             }
         } catch (error) {
             console.error("Error blocking user:", error);
-            throw new Error("Server error. Please try again later.");
+            throw new Error(constants.SERVER_ERROR);
         }
     }
 
@@ -56,7 +57,7 @@ export const useUserService = () => {
             }
         } catch (error) {
             console.error("Error fetching teachers:", error);
-            throw new Error("Server error. Please try again later.");
+            throw new Error(constants.SERVER_ERROR);
         }
     }
 
@@ -70,7 +71,7 @@ export const useUserService = () => {
             }
         } catch (error) {
             console.error("Error verification teacher:", error);
-            throw new Error("Server error. Please try again later.");
+            throw new Error(constants.SERVER_ERROR);
         }
     }
 

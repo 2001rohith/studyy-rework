@@ -26,7 +26,7 @@ function StudentAllCourses() {
 
     useEffect(() => {
         getCourses();
-    }, [currentPage, search, modulesFilter]);
+    }, [currentPage, search, modulesFilter])
 
     const getCourses = async () => {
         try {
@@ -43,7 +43,7 @@ function StudentAllCourses() {
             setTotalPages(totalPages);
             setTotalCourses(totalCourses);
         } catch (error) {
-            console.error("Error in fetching courses:", error);
+            console.error(error);
             setError(error.response?.data?.message || 'Failed to fetch courses');
         } finally {
             setLoading(false);

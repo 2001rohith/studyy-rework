@@ -35,7 +35,14 @@ const constants = {
     PASSWORD_AND_CONFIRM_MISMATCH: "Password and confirm password should be same!",
     TOKEN_EXPIRED: "Token is invalid or has expired",
     WRONG_PASSWORD: "Wrong password!",
-
+    GET_USER_ERROR: "Error getting users",
+    GET_TEACHER_ERROR: "Error getting teachers",
+    GET_STUDENTS_ERROR:"Error getting student",
+    COURSES_ERROR: "Error on course",
+    MODULE_ERROR:"Error on module",
+    ASSIGNMENT_ERROR: "Error on assignment",
+    QUIZ_ERROR: "Error on quiz",
+    CLASS_ERROR: "Error on class",
 }
 
 module.exports = constants

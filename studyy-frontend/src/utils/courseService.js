@@ -1,50 +1,50 @@
 import { useApiClient } from "./apiClient";
 import statusCode from "./statusCode"
+import constants from "./constants";
 
 export const useCourseService = () => {
     const apiClient = useApiClient()
-
     const adminFetchCourses = async () => {
         try {
-            const response = await apiClient.get(`/course/admin-get-courses`);
+            const response = await apiClient.get(`/course/admin-get-courses`)
             if (response.status === statusCode.OK) {
-                return response.data.courses || [];
+                return response.data.courses || []
             } else {
-                throw new Error(response.data.message || "Failed to fetch courses.");
+                throw new Error(response.data.message || "Failed to fetch courses.")
             }
         } catch (error) {
-            console.error("Error fetching courses:", error);
-            throw new Error("Server error. Please try again later.");
+            console.error("Error fetching courses:", error)
+            throw new Error(constants.SERVER_ERROR)
         }
-    };
+    }
 
     const adminFetchCourse = async (id) => {
         try {
-            const response = await apiClient.get(`/course/admin-get-course/${id}`);
+            const response = await apiClient.get(`/course/admin-get-course/${id}`)
             if (response.status === statusCode.OK) {
-                return response.data || [];
+                return response.data || []
             } else {
-                throw new Error(response.data.message || "Failed to fetch course.");
+                throw new Error(response.data.message || "Failed to fetch course.")
             }
         } catch (error) {
-            console.error("Error fetching course:", error);
-            throw new Error("Server error. Please try again later.");
+            console.error("Error fetching course:", error)
+            throw new Error(constants.SERVER_ERROR)
         }
-    };
+    }
 
     const deleteCourse = async (id) => {
         try {
-            const response = await apiClient.delete(`/course/teacher-delete-course/${id}`);
+            const response = await apiClient.delete(`/course/teacher-delete-course/${id}`)
             if (response.status === statusCode.OK) {
                 return true
             } else {
-                throw new Error(response.data.message || "Failed to delete course.");
+                throw new Error(response.data.message || "Failed to delete course.")
             }
         } catch (error) {
             console.error("Error deleting course:", error);
-            throw new Error("Server error. Please try again later.");
+            throw new Error(constants.SERVER_ERROR)
         }
-    };
+    }
 
     const adminFetchAssignments = async () => {
         try {
@@ -55,22 +55,22 @@ export const useCourseService = () => {
                 throw new Error(response.data.message || "Failed to fetch assignents")
             }
         } catch (error) {
-            console.error("Error fetching assignments:", error);
-            throw new Error("Server error. Please try again later.");
+            console.error("Error fetching assignments:", error)
+            throw new Error(constants.SERVER_ERROR)
         }
     }
 
     const adminDeleteAssignment = async (id) => {
         try {
-            const response = await apiClient.delete(`/course/admin-delete-assignment/${id}`);
+            const response = await apiClient.delete(`/course/admin-delete-assignment/${id}`)
             if (response.status === statusCode.OK) {
                 return true
             } else {
-                throw new Error(response.data.message || "Failed to delete assignment.");
+                throw new Error(response.data.message || "Failed to delete assignment.")
             }
         } catch (error) {
             console.error("Error deleting assignment:", error);
-            throw new Error("Server error. Please try again later.");
+            throw new Error(constants.SERVER_ERROR)
         }
     }
 
@@ -83,8 +83,8 @@ export const useCourseService = () => {
                 throw new Error(response.data.message || "Failed to get Quizzes.");
             }
         } catch (error) {
-            console.error("Error getting quizzes:", error);
-            throw new Error("Server error. Please try again later.");
+            console.error("Error getting quizzes:", error)
+            throw new Error(constants.SERVER_ERROR)
         }
     }
 
@@ -98,7 +98,7 @@ export const useCourseService = () => {
             }
         } catch (error) {
             console.error("Error getting quiz:", error);
-            throw new Error("Server error. Please try again later.");
+            throw new Error(constants.SERVER_ERROR);
         }
     }
 
@@ -112,7 +112,7 @@ export const useCourseService = () => {
             }
         } catch (error) {
             console.error("Error deleting module:", error);
-            throw new Error("Server error. Please try again later.");
+            throw new Error(constants.SERVER_ERROR);
         }
     }
 
@@ -158,9 +158,9 @@ export const useCourseService = () => {
                 search: search,
                 modulesFilter: modulesFilter,
             });
-    
+
             const response = await apiClient.get(`/course/home-get-courses/${userId}?${queryParams.toString()}`);
-    
+
             if (response.status === statusCode.OK) {
                 return {
                     courses: response.data.courses || [],
@@ -173,7 +173,7 @@ export const useCourseService = () => {
             throw new Error(error.response?.data?.message || "Error fetching courses.");
         }
     };
-    
+
 
     const studentFetchQuizzes = async (userId) => {
         try {
@@ -512,7 +512,7 @@ export const useCourseService = () => {
         try {
             const response = await apiClient.get(`/course/get-quiz/${quizId}`);
             if (response.status === statusCode.OK) {
-                return response.data.quiz; 
+                return response.data.quiz;
             } else {
                 throw new Error(response.data.message || "Failed to load quiz details");
             }
@@ -522,118 +522,118 @@ export const useCourseService = () => {
     }
 
     const updateQuiz = async (quizId, quizData) => {
-    try {
-        const response = await apiClient.put(`/course/teacher-edit-quiz/${quizId}`, quizData);
-        if (response.status === statusCode.OK) {
-            return response.data
-        } else {
-            throw new Error(response.data.message || "Error occurred while updating the quiz.");
+        try {
+            const response = await apiClient.put(`/course/teacher-edit-quiz/${quizId}`, quizData);
+            if (response.status === statusCode.OK) {
+                return response.data
+            } else {
+                throw new Error(response.data.message || "Error occurred while updating the quiz.");
+            }
+        } catch (error) {
+            throw new Error(error.response?.data?.message || "Server error. Please try again.");
         }
-    } catch (error) {
-        throw new Error(error.response?.data?.message || "Server error. Please try again.");
-    }
-};
+    };
 
-const savePeerId = async (classId, peerId) => {
-    try {
-        const response = await apiClient.put(`/course/add-peerid/${classId}`, { peerId });
-        if (response.status === statusCode.OK) {
-            console.log("Peer ID saved successfully");
-        } else {
-            throw new Error("Failed to save Peer ID");
+    const savePeerId = async (classId, peerId) => {
+        try {
+            const response = await apiClient.put(`/course/add-peerid/${classId}`, { peerId });
+            if (response.status === statusCode.OK) {
+                console.log("Peer ID saved successfully");
+            } else {
+                throw new Error("Failed to save Peer ID");
+            }
+        } catch (error) {
+            console.error("Error saving Peer ID:", error.message || error);
+            throw error;
         }
-    } catch (error) {
-        console.error("Error saving Peer ID:", error.message || error);
-        throw error;
     }
-}
 
-const updateClassStatus = async (classId) => {
-    try {
-        const response = await apiClient.put(`/course/update-class-status/${classId}`);
-        if (response.status === statusCode.OK) {
-            console.log("Class status updated");
-        } else {
-            throw new Error("Failed to update class status");
+    const updateClassStatus = async (classId) => {
+        try {
+            const response = await apiClient.put(`/course/update-class-status/${classId}`);
+            if (response.status === statusCode.OK) {
+                console.log("Class status updated");
+            } else {
+                throw new Error("Failed to update class status");
+            }
+        } catch (error) {
+            console.error("Failed to update class status:", error.message || error);
+            throw error;
         }
-    } catch (error) {
-        console.error("Failed to update class status:", error.message || error);
-        throw error;
     }
-}
 
-const getClasses = async (courseId) => {
-    try {
-        const response = await apiClient.get(`/course/teacher-get-classes/${courseId}`);
-        if (response.status === statusCode.OK) {
-            return response.data.classes;
-        } else {
-            throw new Error("No live classes found or failed to fetch!");
+    const getClasses = async (courseId) => {
+        try {
+            const response = await apiClient.get(`/course/teacher-get-classes/${courseId}`);
+            if (response.status === statusCode.OK) {
+                return response.data.classes;
+            } else {
+                throw new Error("No live classes found or failed to fetch!");
+            }
+        } catch (err) {
+            console.error("Error fetching classes:", err.message || err);
+            throw err;
         }
-    } catch (err) {
-        console.error("Error fetching classes:", err.message || err);
-        throw err;
     }
-}
 
-const deleteClass = async (classId) => {
-    try {
-        const response = await apiClient.delete(`/course/teacher-delete-class/${classId}`);
-        if (response.status === statusCode.OK) {
-            return response.data.message;
-        } else {
-            throw new Error("Failed to delete the class!");
+    const deleteClass = async (classId) => {
+        try {
+            const response = await apiClient.delete(`/course/teacher-delete-class/${classId}`);
+            if (response.status === statusCode.OK) {
+                return response.data.message;
+            } else {
+                throw new Error("Failed to delete the class!");
+            }
+        } catch (err) {
+            console.error("Error deleting class:", err.message || err);
+            throw err;
         }
-    } catch (err) {
-        console.error("Error deleting class:", err.message || err);
-        throw err;
     }
-}
 
-const fetchQuizzes = async (courseId) => {
-    try {
-        const response = await apiClient.get(`/course/get-quizzes/${courseId}`);
-        if (response.status === statusCode.OK) {
-            return {
-                quizzes: response.data.quizzes,
-                courseName: response.data.courseName,
-            };
-        } else {
-            throw new Error(response.data.message || "Failed to fetch quizzes");
+    const fetchQuizzes = async (courseId) => {
+        try {
+            const response = await apiClient.get(`/course/get-quizzes/${courseId}`);
+            if (response.status === statusCode.OK) {
+                return {
+                    quizzes: response.data.quizzes,
+                    courseName: response.data.courseName,
+                };
+            } else {
+                throw new Error(response.data.message || "Failed to fetch quizzes");
+            }
+        } catch (error) {
+            console.error("Error fetching quizzes:", error.message || error);
+            throw error;
         }
-    } catch (error) {
-        console.error("Error fetching quizzes:", error.message || error);
-        throw error;
     }
-}
 
-const deleteQuiz = async (quizId) => {
-    try {
-        const response = await apiClient.delete(`/course/teacher-delete-quiz/${quizId}`);
-        if (response.status === statusCode.OK) {
-            return response.data.message;
-        } else {
-            throw new Error("Failed to delete quiz");
+    const deleteQuiz = async (quizId) => {
+        try {
+            const response = await apiClient.delete(`/course/teacher-delete-quiz/${quizId}`);
+            if (response.status === statusCode.OK) {
+                return response.data.message;
+            } else {
+                throw new Error("Failed to delete quiz");
+            }
+        } catch (error) {
+            console.error("Error deleting quiz:", error.message || error);
+            throw error;
         }
-    } catch (error) {
-        console.error("Error deleting quiz:", error.message || error);
-        throw error;
     }
-}
 
-const fetchQuizSubmissions = async (quizId) => {
-    try {
-        const response = await apiClient.get(`/course/get-quiz-submissions/${quizId}`);
-        if (response.status === 200) {
-            return response.data.submissions;
-        } else {
-            throw new Error("Failed to fetch submissions");
+    const fetchQuizSubmissions = async (quizId) => {
+        try {
+            const response = await apiClient.get(`/course/get-quiz-submissions/${quizId}`);
+            if (response.status === 200) {
+                return response.data.submissions;
+            } else {
+                throw new Error("Failed to fetch submissions");
+            }
+        } catch (error) {
+            console.error("Error fetching quiz submissions:", error.message || error);
+            throw error;
         }
-    } catch (error) {
-        console.error("Error fetching quiz submissions:", error.message || error);
-        throw error;
-    }
-};
+    };
 
 
 
@@ -650,7 +650,7 @@ const fetchQuizSubmissions = async (quizId) => {
         createNotification, createEmailNotification, updateAssignment,
         updateClass, updateCourse, fetchModuleData, updateModule,
         getQuizDetails, updateQuiz, savePeerId, updateClassStatus,
-        getClasses, deleteClass, fetchQuizzes, deleteQuiz, 
-        fetchQuizSubmissions, 
+        getClasses, deleteClass, fetchQuizzes, deleteQuiz,
+        fetchQuizSubmissions,
     }
 }
