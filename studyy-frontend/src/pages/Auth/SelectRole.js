@@ -5,7 +5,7 @@ import { useUser } from "../../UserContext"
 
 
 const SelectRole = () => {
-    const { roleSelection } = useUserService()
+  const { roleSelection } = useUserService()
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedRole, setSelectedRole] = useState('');
@@ -14,7 +14,16 @@ const SelectRole = () => {
   const [token, setToken] = useState(location.state?.token || '');
   const [certificate, setCertificate] = useState(null);
   const [message, setMessage] = useState('');
-  
+  const [tokenFromUrl, setTokenFromUrl] = useState('');
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const tokenInUrl = queryParams.get('token');
+    if (tokenInUrl) {
+      setTokenFromUrl(tokenInUrl);
+      setToken(tokenInUrl);
+    }
+  }, [location.search]);
 
   const handleRoleSelection = async () => {
     try {
@@ -22,32 +31,32 @@ const SelectRole = () => {
         setMessage('Upload a certificate as PDF!');
         return;
       }
-  
+
       if (!selectedRole || !token) {
         setMessage('Role or token is missing.');
         return;
       }
-  
-      const data = await roleSelection(selectedRole, certificate);
-  
+
+      const data = await roleSelection(token,selectedRole, certificate);
+
       login(data.user, data.token);
       const userData = { email, role: data.role };
-  
+
       const roleRoutes = {
         teacher: '/teacher-home',
         student: '/student-home',
       };
-  
+
       const route = roleRoutes[data.role] || '/';
       navigate(route, { state: { user: userData } });
-  
+
       setMessage('Role selected successfully!');
     } catch (error) {
       console.error('Error during role selection:', error);
       setMessage(error.message || 'Error during role selection, please try again.');
     }
   };
-  
+
 
   return (
     <div className="wrapper">

@@ -35,19 +35,19 @@ const assignmentService = {
         if (!course) {
             throw new Error(constants.NO_COURSE_FOUND);
         }
-    
+
         const newAssignment = await assignmentRepository.createAssignment({
             title,
             description,
             dueDate,
             course: courseId,
         });
-    
+
         await courseRepository.addAssignmentToCourse(courseId, newAssignment._id);
-    
+
         return newAssignment;
     },
-    
+
     async updateAssignment(assignmentId, updateFields) {
         return await assignmentRepository.updateAssignmentById(assignmentId, updateFields);
     },
@@ -58,7 +58,7 @@ const assignmentService = {
 
     async getAssignments() {
         const assignments = await assignmentRepository.getAssignments();
-        
+
         return assignments.map(assignment => ({
             _id: assignment._id,
             title: assignment.title,
@@ -66,22 +66,22 @@ const assignmentService = {
             course: assignment.course ? assignment.course.title : "unknown assignment"
         }));
     },
-    
+
     async adminDeleteAssignment(assignmentId) {
         const deletedAssignment = await assignmentRepository.deleteAssignmentById(assignmentId);
         return deletedAssignment;
     },
 
-    async studentGetAssignments(studentId) {
+    async studentGetAssignments(studentId, { page, limit }) {
         const student = await courseRepository.findStudentById(studentId);
-    
+
         if (!student) {
             throw new Error(constants.STUDENT_NOT_FOUND);
         }
-    
+
         const courseIds = student.enrolledCourses.map(course => course._id);
-        const assignments = await assignmentRepository.findAssignmentsByCourseIds(courseIds);
-    
+        const assignments = await assignmentRepository.findAssignmentsByCourseIds(courseIds, { page, limit });
+
         return assignments.map(assignment => ({
             _id: assignment._id,
             title: assignment.title,
@@ -94,38 +94,38 @@ const assignmentService = {
 
     async studentSubmitAssignment(assignmentId, studentId, file) {
         const assignment = await assignmentRepository.findAssignmentById(assignmentId);
-    
+
         if (!assignment) {
             throw new Error(constants.ASSIGNMENT_NOT_FOUND);
         }
-    
+
         const currentDate = new Date();
         const dueDate = new Date(assignment.dueDate);
-    
+
         if (currentDate > dueDate) {
             throw new Error(constants.ASSIGNMENT_DUE_PASSED);
         }
-    
+
         if (!file) {
             throw new Error(constants.FILE_IS_REQUIRED);
         }
-    
+
         assignment.submissions.push({
             student: studentId,
             filePath: file.path
         });
-    
+
         await assignmentRepository.saveAssignment(assignment);
         return { message: "Assignment submitted successfully" };
     },
 
     async getAssignmentSubmissions(assignmentId) {
         const assignment = await assignmentRepository.findAssignmentById(assignmentId);
-    
+
         if (!assignment) {
             throw new Error(constants.ASSIGNMENT_NOT_FOUND);
         }
-    
+
         return assignment.submissions.map(submission => ({
             name: submission.student.name,
             filePath: submission.filePath,

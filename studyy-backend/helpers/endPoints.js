@@ -4,6 +4,7 @@ const Endpoints = {
         VERIFY_OTP: `/verify-otp`,
         RESEND_OTP: `/resend-otp`,
         LOGIN: `/login`,
+        USER_INFO: '/get-user-info',
         AUTH_GOOGLE: `/auth/google`,
         GOOGLE_CALLBACK: `/auth/google/callback`,
         SELECT_ROLE: `/select-role`,

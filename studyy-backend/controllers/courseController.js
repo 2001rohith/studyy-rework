@@ -459,8 +459,9 @@ exports.studentEnrollment = async (req, res) => {
 
 exports.studentGetAssignments = async (req, res) => {
     const studentId = req.params.id;
+    const { page = 1, limit = 6 } = req.query
     try {
-        const assignments = await assignmentService.studentGetAssignments(studentId);
+        const assignments = await assignmentService.studentGetAssignments(studentId, { page, limit });
         res.status(HttpStatus.OK).json({ message: "Fetched the assignments", assignments });
     } catch (error) {
         if (error.message === constants.STUDENT_NOT_FOUND) {
@@ -818,7 +819,7 @@ exports.getModuleData = async (req, res) => {
 
     try {
         const moduleData = await moduleService.getModuleData(moduleId);
-        res.status(HttpStatus.OK).json({module: moduleData });
+        res.status(HttpStatus.OK).json({ module: moduleData });
     } catch (error) {
         console.error('Error getting module data:', error.message);
         if (error.message === constants.MODULE_NOT_FOUND) {
@@ -832,18 +833,21 @@ exports.homeCourses = async (req, res) => {
     const userId = req.params.id;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 4;
-    const { search, modulesFilter } = req.query;
+    const search = req.query.search || "";
+    const modulesFilter = req.query.modulesFilter || "";
 
     try {
-        const { courses, totalPages } = await courseService.getHomeCourses(userId, { 
-            search, 
-            modulesFilter, 
-            page, 
-            limit 
+
+        const { courses, totalCourses, totalPages } = await courseService.getHomeCourses(userId, {
+            search,
+            modulesFilter,
+            page,
+            limit
         });
-        res.status(HttpStatus.OK).json({ 
-            courses, 
+        res.status(HttpStatus.OK).json({
+            courses,
             totalPages,
+            totalCourses,
             currentPage: page
         });
     } catch (error) {

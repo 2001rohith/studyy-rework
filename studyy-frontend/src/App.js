@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { UserProvider } from './UserContext';
 import SignUp from "./pages/Auth/SignUp"
 import Login from './pages/Auth/Login';
+import AuthCallback from './pages/Auth/AuthCallback';
 import Otp from './pages/Auth/Otp';
 import SelectRole from './pages/Auth/SelectRole';
 import TeacherHome from './pages/Teacher/TeacherHome';
@@ -67,6 +68,9 @@ function App() {
             <Route path='/otp' element={
               <Otp />
             } />
+            <Route path="/auth/callback" element={
+              <AuthCallback
+              />} />
             <Route path='/select-role' element={
               <>
                 <SelectRole />

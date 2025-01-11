@@ -129,7 +129,7 @@ export const useUserService = () => {
         }
     }
 
-    const roleSelection = async (role, certificate) => {
+    const roleSelection = async (token, role, certificate) => {
         try {
             const formData = new FormData();
             formData.append('role', role);
@@ -137,7 +137,7 @@ export const useUserService = () => {
                 formData.append('certificate', certificate);
             }
 
-            const response = await apiClient.post('/user/select-role', formData);
+            const response = await apiClient.post(`/user/select-role${token}`, formData);
 
             if (response.status === statusCode.OK) {
                 return response.data;

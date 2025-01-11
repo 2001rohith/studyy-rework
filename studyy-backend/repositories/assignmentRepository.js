@@ -38,10 +38,15 @@ const assignmentRepository = {
             select: "title"
         });
     },
-    async findAssignmentsByCourseIds(courseIds) {
+    async findAssignmentsByCourseIds(courseIds, { page, limit }) {
         return await Assignment.find({ course: { $in: courseIds } })
-            .populate({ path: "course", select: "title" })
-            .select("title dueDate description course submissions");
+            .populate({
+                path: "course",
+                select: "title"
+            })
+            .select("title dueDate description course submissions")
+            .skip((page - 1) * limit)
+            .limit(parseInt(limit))
     },
 
     async findAssignmentById(assignmentId) {

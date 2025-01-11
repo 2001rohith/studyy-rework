@@ -13,19 +13,15 @@ router.post(Endpoints.AUTH.SIGNUP, signUp)
 router.post(Endpoints.AUTH.VERIFY_OTP, verifyOtp)
 router.post(Endpoints.AUTH.RESEND_OTP, resendOtp)
 router.post(Endpoints.AUTH.LOGIN, login)
+router.get(Endpoints.AUTH.USER_INFO, authMiddleware, getProfile)
 router.get(Endpoints.AUTH.AUTH_GOOGLE, passport.authenticate("google", { scope: ["profile", "email"] }))
-router.get(Endpoints.AUTH.GOOGLE_CALLBACK, passport.authenticate("google", { session: false, failureRedirect: "/login" }),
+router.get(Endpoints.AUTH.GOOGLE_CALLBACK,
+  passport.authenticate("google", { session: false, failureRedirect: "/" }),
   (req, res) => {
-    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, { expiresIn: "1h" })
-    if (req.user.role === "teacher") {
-      res.redirect(`${process.env.FRONTEND_URL}/teacher-home?token=${token}`);
-    } else if (req.user.role === "student") {
-      res.redirect(`${process.env.FRONTEND_URL}/student-home?token=${token}`);
-    }
-    else {
-      res.redirect(`${process.env.FRONTEND_URL}/select-role?token=${token}`);
-    }
-  })
+    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
+  }
+);
 router.post(Endpoints.AUTH.SELECT_ROLE, upload.single("certificate"), authMiddleware, selectRole)
 router.post(Endpoints.AUTH.FORGOT_PASSWORD, forgotPassword);
 router.post(Endpoints.AUTH.RESET_PASSWORD, resetPassword);
