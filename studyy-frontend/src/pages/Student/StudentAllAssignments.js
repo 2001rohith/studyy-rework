@@ -29,7 +29,7 @@ function StudentAllAssignments() {
             navigate('/');
             return;
         }
-    
+
         const getAssignments = async () => {
             try {
                 setLoading(true);
@@ -41,10 +41,10 @@ function StudentAllAssignments() {
                 setLoading(false);
             }
         };
-    
+
         getAssignments();
     }, [user, navigate]);
-    
+
 
     const handleFileUploadClick = (assignmentId) => {
         if (fileInputRefs.current[assignmentId]) {
@@ -58,7 +58,7 @@ function StudentAllAssignments() {
             alert("No file selected");
             return;
         }
-    
+
         try {
             const { success, message } = await submitAssignment(assignmentId, user.id, token, file);
             if (success) {
@@ -87,7 +87,7 @@ function StudentAllAssignments() {
             setShowToast(true);
         }
     };
-    
+
 
     const openUploadModal = (assignment) => {
         setAssignmentDetails(assignment);

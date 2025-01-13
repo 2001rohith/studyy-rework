@@ -14,7 +14,7 @@ export const useUserService = () => {
                 throw new Error(response.data.message || "Error getiing users")
             }
         } catch (error) {
-            console.error("Error fetching users:", error);
+            console.error("Error fetching users:", error)
             throw new Error(constants.SERVER_ERROR);
         }
     }
@@ -28,8 +28,8 @@ export const useUserService = () => {
                 throw new Error(response.data.message || "Failed to delete user.");
             }
         } catch (error) {
-            console.error("Error deleting user:", error);
-            throw new Error(constants.SERVER_ERROR);
+            console.error("Error deleting user:", error)
+            throw new Error(constants.SERVER_ERROR)
         }
     }
 

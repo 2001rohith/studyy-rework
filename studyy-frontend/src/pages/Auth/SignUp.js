@@ -17,7 +17,7 @@ function SignUp() {
     e.preventDefault();
     console.log("name:", name);
     console.log("email:", email);
-    console.log("password:", password);
+    console.log("password:", password)
 
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();

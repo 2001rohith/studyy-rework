@@ -14,7 +14,7 @@ const userService = {
 
     async registerUser(userData) {
         if (!await this.validatePhone(userData.phone)) {
-            throw new Error(constants.INVALID_PHONE);
+            throw new Error(constants.INVALID_PHONE)
         }
 
         const existingUser = await userRepository.findByEmail(userData.email);

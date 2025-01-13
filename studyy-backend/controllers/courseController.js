@@ -17,7 +17,7 @@ exports.getStudents = async (req, res) => {
             });
         }
         console.error(constants.GET_STUDENTS_ERROR, error);
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
             message: constants.SERVER_ERROR
         });
     }
