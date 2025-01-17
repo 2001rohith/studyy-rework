@@ -205,7 +205,7 @@ export const useUserService = () => {
     const editProfileDetails = async (userId, name) => {
         try {
             const response = await apiClient.put(`/user/edit-profile/${userId}`, { name });
-
+            // this is edit profile 
             if (response.status === statusCode.OK) {
                 return response.data;
             } else {

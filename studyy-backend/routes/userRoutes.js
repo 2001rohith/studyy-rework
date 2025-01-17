@@ -13,7 +13,7 @@ router.post(Endpoints.AUTH.SIGNUP, signUp)
 router.post(Endpoints.AUTH.VERIFY_OTP, verifyOtp)
 router.post(Endpoints.AUTH.RESEND_OTP, resendOtp)
 router.post(Endpoints.AUTH.LOGIN, login)
-router.get(Endpoints.AUTH.USER_INFO, authMiddleware, getProfile)
+// router.get(Endpoints.AUTH.USER_INFO, authMiddleware, getProfile)
 router.get(Endpoints.AUTH.AUTH_GOOGLE, passport.authenticate("google", { scope: ["profile", "email"] }))
 router.get(Endpoints.AUTH.GOOGLE_CALLBACK,
   passport.authenticate("google", { session: false, failureRedirect: "/" }),

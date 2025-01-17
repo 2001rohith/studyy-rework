@@ -17,7 +17,7 @@ exports.getStudents = async (req, res) => {
             });
         }
         console.error(constants.GET_STUDENTS_ERROR, error);
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: constants.SERVER_ERROR
         });
     }
@@ -853,6 +853,16 @@ exports.homeCourses = async (req, res) => {
     }
 };
 
+exports.getcourseTitle = async (req, res) => {
+    const title = req.body
+    try {
+        const course = await courseService.getCourseByTitle(title)
+        res.status(HttpStatus.OK).json({ course })
+    } catch (error) {
+        console.error('Get courses error:', error.message);
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: constants.SERVER_ERROR });
+    }
+}
 
 
 

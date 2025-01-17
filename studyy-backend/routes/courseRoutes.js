@@ -11,7 +11,8 @@ const { createCourse, getCourses, DeleteCourse, getCourse, EditCourse,
     enrolledCourses, submitQuiz, getClasses, createClass,studentGetClasses,sendNotification,getNotifications,
     markNotificationsAsRead,addClassPeerId,EditClass,deleteClass,
     getAssignmentSubmissions,getQuizSubmissions,getCourseStudents,
-    sendEmailNotification,setClassStatusEnded,getModuleData,homeCourses } = require("../controllers/courseController")
+    sendEmailNotification,setClassStatusEnded,getModuleData,homeCourses, 
+    getcourseTitle} = require("../controllers/courseController")
 const Endpoints = require("../helpers/endPoints")
 
 
@@ -66,5 +67,7 @@ router.post(Endpoints.STUDENT.SUBMIT_QUIZ, submitQuiz)
 router.get(Endpoints.STUDENT.GET_CLASSES, studentGetClasses)
 router.get(Endpoints.STUDENT.GET_NOTIFICATIONS, getNotifications)
 router.post(Endpoints.STUDENT.MARK_NOTIFICATIONS_AS_READ, markNotificationsAsRead)
+router.get(Endpoints.STUDENT.GET_COURSE_BY_TITLE, getcourseTitle)
+
 
 module.exports = router

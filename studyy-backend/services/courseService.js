@@ -242,10 +242,13 @@ const courseService = {
         });
 
         return coursesData;
+    },
+
+    async getCourseByTitle(title) {
+        const course = await courseRepository.getByTitle(title)
+        if (!course) throw new Error("Course not found")
+        return course
     }
-
-
-
 
 }
 

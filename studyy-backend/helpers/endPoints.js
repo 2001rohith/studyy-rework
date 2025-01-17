@@ -69,6 +69,7 @@ const Endpoints = {
         GET_NOTIFICATIONS: `/get-notifications/:id`,
         MARK_NOTIFICATIONS_AS_READ: `/mark-notifications-as-read`,
         GET_COURSES: `/home-get-courses/:id`,
+        GET_COURSE_BY_TITLE :`/get-course-by-title`
     },
 
 };
