@@ -14,7 +14,6 @@ const { createCourse, getCourses, DeleteCourse, getCourse, EditCourse,
     sendEmailNotification,setClassStatusEnded,getModuleData,homeCourses } = require("../controllers/courseController")
 const Endpoints = require("../helpers/endPoints")
 
-
 //Teacher routes
 router.post(Endpoints.TEACHER.CREATE_COURSE, createCourse)
 router.get(Endpoints.TEACHER.GET_COURSES, authMiddleware, getCourses)
@@ -55,7 +54,6 @@ router.get(Endpoints.ADMIN.GET_ASSIGNMENTS, adminGetAssignments)
 router.delete(Endpoints.ADMIN.DELETE_ASSIGNMENT, adminDeleteAssignment)
 
 //Student routes
-
 router.get(Endpoints.STUDENT.GET_COURSES, homeCourses)
 router.post(Endpoints.STUDENT.ENROLL,studentEnrollment)
 router.get(Endpoints.STUDENT.ENROLLED_COURSES, enrolledCourses)
