@@ -167,16 +167,16 @@ const courseRepository = {
         }
     },
 
-    async getByTitle(title) {
-        try {
-            const course = await Course.find({ course: { $in: title } })
-            if (!course) return false
-            return course
-        } catch (error) {
-            console.error('Repository Error:', error);
-            throw new Error(`Error finding courses: ${error.message}`);
-        }
-    }
+    // async getByTitle(title) {
+    //     try {
+    //         const course = await Course.find({ title: { $in: title } })
+    //         if (!course) return false
+    //         return course
+    //     } catch (error) {
+    //         console.error('Repository Error:', error);
+    //         throw new Error(`Error finding courses: ${error.message}`);
+    //     }
+    // }
 
 }
 
