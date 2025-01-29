@@ -3,15 +3,17 @@ const router = express.Router()
 const authMiddleware = require("../middlewares/auth")
 const { upload } = require("../middlewares/uploadMiddleware")
 const { createCourse, getCourses, DeleteCourse, getCourse, EditCourse,
-    createModule, DeleteModule, EditModule, AdmingetCourses, AdmingetCourse,
-    CreateAssignment, GetAssignments, EditAssignment, DeleteAssignment, addQuiz,
-    getQuizzes, DeleteQuiz, GetQuiz, EditQuiz, adminGetQuizzes, adminDeleteQuiz,
-    adminGetAssignments, adminDeleteAssignment, studentEnrollment,
-    studentGetAssignments, studentsubmitAssignment, studentGetQuizzes,
-    enrolledCourses, submitQuiz, getClasses, createClass,studentGetClasses,sendNotification,getNotifications,
-    markNotificationsAsRead,addClassPeerId,EditClass,deleteClass,
-    getAssignmentSubmissions,getQuizSubmissions,getCourseStudents,
-    sendEmailNotification,setClassStatusEnded,getModuleData,homeCourses } = require("../controllers/courseController")
+    createModule, DeleteModule, EditModule, AdmingetCourses, AdmingetCourse, studentEnrollment,
+    enrolledCourses, sendNotification, getNotifications,
+    markNotificationsAsRead, getCourseStudents,
+    sendEmailNotification, getModuleData, homeCourses } = require("../controllers/courseController")
+
+const { GetAssignments, CreateAssignment, EditAssignment, DeleteAssignment,
+    adminGetAssignments, adminDeleteAssignment, studentGetAssignments, studentsubmitAssignment,
+    getAssignmentSubmissions } = require("../controllers/assignmentController")
+const { addQuiz, getQuizzes, DeleteQuiz, GetQuiz, EditQuiz, adminGetQuizzes, adminDeleteQuiz,
+    studentGetQuizzes, submitQuiz, getQuizSubmissions } = require("../controllers/quizController")
+const { getClasses, createClass, studentGetClasses, addClassPeerId, EditClass, deleteClass, setClassStatusEnded } = require("../controllers/classController")
 const Endpoints = require("../helpers/endPoints")
 
 //Teacher routes
@@ -55,7 +57,7 @@ router.delete(Endpoints.ADMIN.DELETE_ASSIGNMENT, adminDeleteAssignment)
 
 //Student routes
 router.get(Endpoints.STUDENT.GET_COURSES, homeCourses)
-router.post(Endpoints.STUDENT.ENROLL,studentEnrollment)
+router.post(Endpoints.STUDENT.ENROLL, studentEnrollment)
 router.get(Endpoints.STUDENT.ENROLLED_COURSES, enrolledCourses)
 router.get(Endpoints.STUDENT.GET_ASSIGNMENTS, studentGetAssignments)
 router.post(Endpoints.STUDENT.SUBMIT_ASSIGNMENT, upload.single("file"), studentsubmitAssignment)
